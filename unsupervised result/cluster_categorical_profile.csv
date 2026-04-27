@@ -1,0 +1,9 @@
+cluster,area_of_work_mode,area_of_work_mode_share,position_type_mode,position_type_mode_share,primary_region_mode,primary_region_mode_share,required_education_mode,required_education_mode_share,preferred_education_mode,preferred_education_mode_share
+0,Consulting,0.329,Professional,0.877,South,0.712,Bachelor's Degree,0.849,Unknown,1.0
+1,Infrastructure & Technology,0.218,Professional,0.612,South,0.564,High School Diploma/GED,0.511,Bachelor's Degree,0.601
+2,Infrastructure & Technology,0.316,Internship,0.408,South,0.539,High School Diploma/GED,0.671,Bachelor's Degree,0.75
+3,Software Engineering,0.407,Internship,0.519,South,0.407,High School Diploma/GED,0.741,Bachelor's Degree,0.741
+4,Consulting,0.925,Professional,0.981,South,0.698,Bachelor's Degree,0.962,Unknown,0.736
+5,Infrastructure & Technology,0.64,Entry Level,0.48,South,0.6,High School Diploma/GED,0.88,Bachelor's Degree,0.72
+6,Software Engineering,0.833,Entry Level,0.833,South,0.5,Bachelor's Degree,0.667,Master's Degree,0.667
+7,Software Engineering,0.524,Professional,0.476,South,0.714,High School Diploma/GED,0.857,Bachelor's Degree,0.905
