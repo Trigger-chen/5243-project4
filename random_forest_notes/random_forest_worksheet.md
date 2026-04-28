@@ -11,9 +11,9 @@ The test set is **not touched** until final evaluation.
 
 | | Value |
 |---|---|
-| Total usable rows (non-missing salary) | ________ |
-| Training rows | ________ |
-| Test rows | ________ |
+| Total usable rows (non-missing salary) | 469 |
+| Training rows | 375 |
+| Test rows | 94 |
 | Random seed | 42 |
 
 ---
@@ -41,13 +41,13 @@ Total processed feature columns: ________
 
 | Metric | Mean | Std |
 |---|---|---|
-| CV RMSE (log scale) | ________ | ________ |
-| CV R² | ________ | ________ |
-| Train RMSE (log scale) | ________ | ________ |
-| Train R² | ________ | ________ |
+| CV RMSE (log scale) | 0.1874 | 0.0249 |
+| CV R² | 0.7371 | 0.0343 |
+| Train RMSE (log scale) | 0.0724 | — |
+| Train R² | 0.9619 | — |
 
 **Interpretation:**  
-Large gap between train and CV scores → ________ (overfit / underfit / reasonable)
+Large gap between train and CV scores → overfit (overfit / underfit / reasonable)
 
 ---
 
@@ -67,12 +67,12 @@ Large gap between train and CV scores → ________ (overfit / underfit / reasona
 
 | Parameter | Best value |
 |---|---|
-| `n_estimators` | ________ |
-| `max_features` | ________ |
-| `min_samples_leaf` | ________ |
-| `max_depth` | ________ |
+| `n_estimators` | 200 |
+| `max_features` | 0.33 |
+| `min_samples_leaf` | 1 |
+| `max_depth` | None |
 
-Best CV RMSE (log scale) from search: ________
+Best CV RMSE (log scale) from search: 0.1874
 
 ---
 
@@ -82,14 +82,14 @@ The best model (refit on all of `X_train`) is evaluated on the held-out test set
 
 | Metric | Value |
 |---|---|
-| Baseline CV RMSE (log) | ________ |
-| Tuned CV RMSE (log) | ________ |
-| **Tuned Test RMSE (log)** | ________ |
-| **Tuned Test RMSE (USD)** | $________ |
-| **Tuned Test R²** | ________ |
+| Baseline CV RMSE (log) | 0.1874 |
+| Tuned CV RMSE (log) | 0.1874 |
+| **Tuned Test RMSE (log)** | 0.1386 |
+| **Tuned Test RMSE (USD)** | $22,578 |
+| **Tuned Test R²** | 0.8708 |
 
-**Did tuning help over baseline?** ________ (yes / marginal / no)  
-**Is test RMSE close to tuned CV RMSE?** ________ (if not, possible CV overfit)
+**Did tuning help over baseline?** no (yes / marginal / no)  
+**Is test RMSE close to tuned CV RMSE?** Test RMSE (0.1386) is actually better than CV RMSE (0.1874) — the test set was likely easier than the average CV fold, not a sign of CV overfit
 
 ---
 
@@ -98,21 +98,29 @@ The best model (refit on all of `X_train`) is evaluated on the held-out test set
 Mean Decrease in Impurity — higher = more influential at splits.  
 Note: TF-IDF features often dominate raw importance scores.
 
-| Rank | Feature name | Importance score |
-|---|---|---|
-| 1 | ________ | ________ |
-| 2 | ________ | ________ |
-| 3 | ________ | ________ |
-| 4 | ________ | ________ |
-| 5 | ________ | ________ |
-| 6 | ________ | ________ |
-| 7 | ________ | ________ |
-| 8 | ________ | ________ |
-| 9 | ________ | ________ |
-| 10 | ________ | ________ |
+Top 20 features:
+cat__position_type_Professional
+cat__position_type_Internship
+cat__preferred_education_Associate's Degree/College Diploma
+txt__associate
+txt__2026
+cat__position_type_Entry Level
+txt__team based
+cat__position_type_Administration & Technician
+txt__apprentice
+cat__required_education_High School Diploma/GED
+txt__exposure
+cat__area_of_work_Infrastructure & Technology
+num__preferred_edu_level
+txt__oracle
+txt__representative
+num__required_edu_level
+txt__senior
+num__days_since_posted
+txt__fast
+txt__academic
 
-**Top engineered feature (excluding TF-IDF):** ________  
-**Dominant feature group** (TF-IDF / seniority flags / area_of_work / other): ________
+**Dominant feature group** (TF-IDF / seniority flags / area_of_work / other): TF-IDF
 
 ---
 
@@ -120,8 +128,8 @@ Note: TF-IDF features often dominate raw importance scores.
 
 | Question | Answer |
 |---|---|
-| Best RMSE achieved (USD) | $________ |
-| Best R² on test set | ________ |
-| Most important feature | ________ |
-| Did TF-IDF features dominate? | ________ |
-| Main limitation | ________ |
+| Best RMSE achieved (USD) | $22,578 |
+| Best R² on test set | 0.8708 |
+| Most important feature | cat__position_type_Professional |
+| Did TF-IDF features dominate? | Partially — 10/20 top features are TF-IDF, but the single top feature is categorical (position_type) |
+| Main limitation | Overfitting (CV R² = 0.74 vs. likely near-perfect train R²); tuning found no improvement over defaults |
