@@ -2,6 +2,21 @@
 
 Group 16
 
+## Introduction
+This project documents an end-to-end data science pipeline for predicting salary from publicly available IBM job postings. The question that we aim to solve with this dataset is: Based on the IBM data, how accurately can we predict the salary of a job posting, and which features drive this prediction? Salary transparency has become increasingly important as pay disclosure laws spread across the United States. Posted ranges are noisy and depend on many different factors such as job family, seniority, geography, education requirements, and specific technical skills listed in the description. A model that learns these relationships from real postings provides both a benchmarking tool and meaningful insight into how a major technology employer prices its roles.
+
+We scraped 478 job postings from IBM's careers website, covering job titles, business area, position type, location, education requirements, preferred technical experience, posting date, and minimum/maximum salary. After cleaning and preprocessing, our cleaned dataset used for analysis contains 471 unique postings spanning roles from internships to senior managing consultants.
+
+This report follows the standard data science pipeline:
+
+- Data Cleaning and Handling Inconsistencies: Type conversion, formatting normalization, duplicate removal, missing value handling on the raw scraped data
+- Exploratory Data Analysis: Data quality checks, univariate distributions, bivariate and multivariate analysis (including statistical tests), time trends, skill keyword frequency, outlier checks
+- Data Preprocessing: Final dataset selection, missing value strategy, rare category pooling, encoding for categorical variables, numerical scaling
+- Feature Engineering: Engineering salary variables, date features, location features, ordinal education encoding, job title parsing for seniority signals, skill flags
+- Unsupervised Learning: Correlation analysis, PCA for dimensionality reduction, K-means clustering, additional outlier detection
+- Supervised Learning: Random Forest, Ridge Regression, and Gradient Boosting modeling with cross-validation, hyperparameter tuning, and evaluation against held-out test data
+- Model Comparison and Selection: Quantitative comparison RMSE, MAE, and R^2 metrics with qualitative considerations (interpretability, robustness) to select a final model
+
 ## 1. Data Acquisition & Preparation
 
 Text
