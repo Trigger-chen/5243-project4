@@ -1,6 +1,6 @@
 # IBM Job Posting Analysis
 
-Group 16
+Group 16: Baixuan Chen, Zhonghao Liu, Jisheng Zeng, Daisy Zhou
 
 ## Introduction
 This project documents an end-to-end data science pipeline for predicting salary from publicly available IBM job postings. The question that we aim to solve with this dataset is: Based on the IBM data, how accurately can we predict the salary of a job posting, and which features drive this prediction? Salary transparency has become increasingly important as pay disclosure laws spread across the United States. Posted ranges are noisy and depend on many different factors such as job family, seniority, geography, education requirements, and specific technical skills listed in the description. A model that learns these relationships from real postings provides both a benchmarking tool and meaningful insight into how a major technology employer prices its roles.
@@ -214,6 +214,7 @@ Text
 ## 7. Group member contributions
 
 * **Zhonghao Liu** took charge of the random forest building and testing. After all three models were done by the team, Liu took over the entire model section by unifying the testing approach and recorded the data. Liu was also responsible for part 4 & 5 for this report.
+* **Daisy Zhou** was in charge of gradient boosting modeling which including training, hyperparameter tuning, testing, and evaluation. She also made additions to the EDA analysis and report as well as wrote the introduction. 
 
 ## 8. Acknowledgements
 
