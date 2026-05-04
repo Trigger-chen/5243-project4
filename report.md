@@ -32,7 +32,7 @@ With our categorical, numerical, and TF-IDF features constructed in the "Feature
 
 | Variable | Why tune this hyperparameter | Options |
 |-|-|-|
-| Number of Estimators \* | More trees reduce prediction variance and stabilize the ensemble, but with diminishing returns and increasing computation cost. | 200, 500 |
+| Number of Estimators \* | More trees reduce prediction variance and stabilize the error rate, but an overly large number of trees would lead to high computation cost for little improvement. | 200, 500 |
 | Portion of All Features | Controls diversity among individual trees by limiting how many features each split considers. Lower values decorrelate trees more, reducing variance at the cost of higher bias per tree. | 0.33, sqrt, 0.2, 0.5 |
 | Minimum Samples per Leaf | Acts as regularization by requiring a minimum amount of data at each leaf. Larger values smooth the model and prevent overfitting to noise. | 1, 2, 5 |
 | Maximum Depth | Caps tree complexity. Unrestricted depth allows trees to memorize training data; shallower trees generalize better. | None, 20, 40 |
@@ -164,13 +164,13 @@ Moreover, the poor performance of ridge regression showed us how penalty and imp
 
 | | | |
 |-|-|-|
-| ![](./model_images/random_forest_avp.png)  | ![](./model_images/gradient_boosting_avp.png) | ![](./model_images/ridge_regression_avp.png) |
+| ![](./Figures/model_images/random_forest_avp.png)  | ![](./Figures/model_images/gradient_boosting_avp.png) | ![](./Figures/model_images/ridge_regression_avp.png) |
 
 **Residual Plot**
 
 | | | |
 |-|-|-|
-| ![](./model_images/random_forest_residual.png) | ![](./model_images/gradient_boosting_residual.png) | ![](./model_images/ridge_regression_residual.png) |
+| ![](./Figures/model_images/random_forest_residual.png) | ![](./Figures/model_images/gradient_boosting_residual.png) | ![](./Figures/model_images/ridge_regression_residual.png) |
 
 Visually, all three reflected similar performances across the testing dataset, with ridge regression having relatively larger errors than the other two methods. Random forest appear to have more clustering on the plot compared to the other two with broad distribution, which shows that random forest tends to have less variance compared to the other two.
 
@@ -178,7 +178,7 @@ Visually, all three reflected similar performances across the testing dataset, w
 
 | | |
 |-|-|
-| ![](./model_images/random_forest_top20.png) | ![](./model_images/gradient_boosting_top20.png) |
+| ![](./Figures/model_images/random_forest_top20.png) | ![](./Figures/model_images/gradient_boosting_top20.png) |
 
 While both models' result proved our hypothesis that critical factors including job level and education level would affect the salary, random forest shows a much better distribution across these features. The feature importances are calculated using Mean Decrease Impurity (MDI): the higher the value, the purer the descendent data after this decision node. Random forest's random feature selection feature provides a more balanced distribution across features, making the top feature "Professional" having only 0.2939 MDI. On the other hand, continuous learning for gradient boosting led to high importance of "Professional" with 0.4867 MDI. As a result, random forest makes features much balanced especially when we have hundreds of features.
 
