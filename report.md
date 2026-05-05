@@ -29,7 +29,12 @@ Salary validity checks also revealed no logical inconsistencies. There were 0 ca
 
 Furthermore, duplicate value detection revealed seven exact duplicate `job_id` values which were likely a byproduct of the web scraping process recapturing the same job posting. We removed these duplicate values on `job_id` to produce a final dataset of 471 unique postings.
 
-To initially handle any missing values, any observations missing `min_salary`, `max_salary`, and `job_title` were dropped since a posting’s outcome variable cannot be defined without salary. We also discovered that missingness was concentrated in a small number of columns with `preferred_education` missing in 123 out of 478 rows (25.73%) and with `preferred_technical_experience` missing in 92 out of the 478 rows (19.25%).  Any NaN values in `preferred_technical_experience` were filled with an empty string, while any NaN values in `area_of_work` were replaced with the string “unknown”.  
+To initially handle any missing values, any observations missing `min_salary`, `max_salary`, and `job_title` were dropped since a posting’s outcome variable cannot be defined without salary. As seen in Figure 1, we also discovered that missingness was concentrated in a small number of columns with `preferred_education` missing in 123 out of 478 rows (25.73%) and with `preferred_technical_experience` missing in 92 out of the 478 rows (19.25%).  Any NaN values in `preferred_technical_experience` were filled with an empty string, while any NaN values in `area_of_work` were replaced with the string “unknown”.  
+
+<p align="center">
+  <img src="./Figures/missing_value_count.png" alt="Missing value counts by column" width="500"><br>
+  <em>Figure 1: Missing value counts by column</em>
+</p>
 
 After initial data cleaning and preparation, the analysis-ready dataset spans a posting window from August 14, 2025 to February 4, 2026 with `min_salary_num` ranging from $29,120 to $275,000 and `max_salary_num` reaching up to $410,000. The median `mid_salary` is approximately $137,000. 
 
@@ -226,7 +231,7 @@ Text
 ## 7. Group member contributions
 
 * **Zhonghao Liu** took charge of the random forest building and testing. After all three models were done by the team, Liu took over the entire model section by unifying the testing approach and recorded the data. Liu was also responsible for part 4 & 5 for this report.
-* **Daisy Zhou** was in charge of gradient boosting modeling which including training, hyperparameter tuning, testing, and evaluation. She also made additions to the EDA analysis and report as well as wrote the introduction. 
+* **Daisy Zhou** was in charge of gradient boosting modeling which includes training, hyperparameter tuning, testing, and evaluation. She also made additions to the EDA analysis and wrote the introduction, data acquisition, and EDA sections for the report. 
 
 ## 8. Acknowledgements
 
