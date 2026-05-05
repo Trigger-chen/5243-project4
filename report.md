@@ -414,7 +414,8 @@ Overall, this project demonstrates that job salary prediction is both feasible a
 ## 7. Group member contributions
 
 * **Zhonghao Liu** took charge of the random forest building and testing. After all three models were done by the team, Liu took over the entire model section by unifying the testing approach and recorded the data. Liu was also responsible for part 4 & 5 for this report.
-* **Daisy Zhou** was in charge of gradient boosting modeling which includes training, hyperparameter tuning, testing, and evaluation. She also made additions to the EDA analysis and wrote the introduction, data acquisition, and EDA sections for the report. 
+* **Daisy Zhou** was in charge of gradient boosting modeling which includes training, hyperparameter tuning, testing, and evaluation. She also made additions to the EDA analysis and wrote the introduction, data acquisition, and EDA sections for the report.
+* **Jisheng Zeng** led the final model comparison and model selection stage of the project. This involved consolidating evaluation results across all supervised learning models, conducting a comparative analysis based on both performance metrics and practical considerations such as interpretability and robustness, selecting the final model, and writing the Conclusion & Discussion section of the report.
 
 ## 8. Acknowledgements
 
