@@ -25,11 +25,11 @@ The dataset was acquired by scraping IBM’s public careers website and was filt
  
 To prepare the raw dataset for downstream analysis, inconsistencies were first addressed. Salary fields were stored as strings with embedded commas, so they were stripped of formatting characters and cast to numeric `min_salary_num` and `max_salary_num` columns. Posting dates, which appear in a “30-Jan-2026” string format, were parsed into a `date_posted_dt` datetime column. Education values were normalized for casing and whitespace to consolidate near-duplicates, and all string fields were trimmed of leading and trailing whitespace. Additionally, two derived numeric features were created: `mid_salary` and `salary_range`. The former represents the midpoint of the posted salary band using the `min_salary_num` and `max_salary_num` columns, while the latter is the spread between the minimum and maximum. 
 
-Salary validity checks also revealed no logical inconsistencies. There were 0 cases where `min_salary_num` exceeded `max_salary_num`, and there were no non-positive salaries either. On the de-duplicated data, `min_salary_num` had a minimum of 29,120 and a mean of 105,427, while `max_salary_num` reached up to 410,000. `mid_salary` had a median of 134,000 and a mean of 141,138. It can also be observed that the location field `state_province`contains multiple states in one posting with about 62% of records including comma-separated multi-state strings. 
+Salary validity checks also revealed no logical inconsistencies. There were 0 cases where `min_salary_num` exceeded `max_salary_num`, and there were no non-positive salaries either. On the de-duplicated data, `min_salary_num` had a minimum of 29,120 and a mean of 105,427, while `max_salary_num` reached up to 410,000. `mid_salary` had a median of 134,000 and a mean of 141,138. 
 
 Furthermore, duplicate value detection revealed seven exact duplicate `job_id` values which were likely a byproduct of the web scraping process recapturing the same job posting. We removed these duplicate values on `job_id` to produce a final dataset of 471 unique postings.
 
-To initially handle any missing values, any observations missing `min_salary`, `max_salary`, and `job_title` were dropped since a posting’s outcome variable cannot be defined without salary. As seen in Figure 1, we also discovered that missingness was concentrated in a small number of columns with `preferred_education` missing in 123 out of 478 rows (25.73%) and with `preferred_technical_experience` missing in 92 out of the 478 rows (19.25%).  Any NaN values in `preferred_technical_experience` were filled with an empty string, while any NaN values in `area_of_work` were replaced with the string “unknown”.  
+To initially handle any missing values, any observations missing `min_salary`, `max_salary`, and `job_title` were dropped since a posting’s outcome variable cannot be defined without salary. We also discovered that missingness was concentrated in a small number of columns with `preferred_education` missing in 123 out of 478 rows (25.73%) and with `preferred_technical_experience` missing in 92 out of the 478 rows (19.25%).  Any NaN values in `preferred_technical_experience` were filled with an empty string, while any NaN values in `area_of_work` were replaced with the string “unknown”.  
 
 <p align="center">
   <img src="./Figures/missing_value_count.png" alt="Missing value counts by column" width="500"><br>
@@ -40,7 +40,147 @@ After initial data cleaning and preparation, the analysis-ready dataset spans a 
 
 ## 2. Exploratory Data Analysis (EDA)
 
-Text
+The EDA is structured around four deeper questions:
+What does the data look like in terms of quality and structure?
+How do individual variables distribute?
+How does salary relate to different job attributes?
+How do these patterns shift over time?
+
+The objective of this section is to both characterize the dataset and to identify key relationships that should inform the decisions we make for feature engineering and supervised modeling later down the pipeline. All subsequent analyses have been performed on the de-duplicated dataset of 471 unique job postings. 
+
+### Univariate Distributions
+
+The categorical composition of the postings is dominated by professional level roles. As seen in Figure 2, Position type is heavily skewed toward Professional (271 postings, 57.5%) with Internship (100, 21.2%) and Entry Level (90, 19.1%) positions representing smaller shares (Figure 2) . Administration and Technician roles are the rarest with only 10 postings (2.1%). Area of work has a longer tail with the largest categories being Software Engineering, Consulting, and Sales followed by Infrastructure & Technology, Design & UX, and Product Management (Figure 3). The remaining postings are distributed across smaller business areas. 
+
+<p align="center">
+  <img src="./Figures/position_type_bar_plot.png" alt="top categories position type count" width="500"><br>
+  <em>Figure 2: Total Count by Position Type</em>
+</p>
+
+<p align="center">
+  <img src="./Figures/area_of_work_bar_plot.png" alt="top categories area of work count" width="500"><br>
+  <em>Figure 3: Total Count by Area of Work</em>
+</p>
+
+
+Education requirements are bimodal where required education clusters around High School Diploma/GED and Bachelor’s Degree and much smaller representation at the Master’s and Doctorate level. Additionally, the `state_province` field is not a clean single-state variable with about 62% of postings listing multiple comma-separated states in a single string. This suggests that these job postings may represent flexible, multi-region, or even remote-eligible recruiting rather than a single fixed location. This has implications for feature engineering, where the `state_province` field cannot be one-hot encoded directly and will instead need to be parsed into derived signals such as a count of states listed and a multi-state indicator. 
+
+
+<p align="center">
+  <img src="./Figures/required_education_bar_plot.png" alt="top categories required education count" width="500"><br>
+  <em>Figure 4: Total Count by Required Education</em>
+</p>
+
+Salary itself is right-skewed as shown in Figure 5. The distribution of `mid_salary` has a long right tail driven by a small number of jobs with extremely high salaries which are tied to senior professional roles. The median sits at around $137,000 with salary levels extending past $300,000. This also has implications for feature engineering where a transformation is required to produce a much more symmetric distribution. Furthermore, as seen in Figure 6, `salary_range` (salary maximum - salary minimum) is also right-skewed with a majority of job postings spanning $50,000 to $90,000 of band width and a median sitting at around $70,000. It can also be seen that only 2 job postings have a fixed salary point where the range is 0. 
+
+<p align="center">
+  <img src="./Figures/mid_salary_dist.png" alt="mid salary distribution" width="500"><br>
+  <em>Figure 5: Distribution of mid_salary</em>
+</p>
+
+<p align="center">
+  <img src="./Figures/salary_range_dist.png" alt="dist of salary range" width="500"><br>
+  <em>Figure 6: Distribution of salary_range</em>
+</p>
+
+### Bivariate Relationships and Statistical Tests
+
+Salary differs significantly across all three of the main job-attribute variables: area of work, position type, and required education. However, the magnitude of the gap differs across them. 
+
+Across the top 8 areas of work, it can be seen that Consulting and Software Engineering sit at the high end with median `mid_salary` of approximately $157,000 and $154,000, respectively. Infrastructure & Technology on the other hand shows a noticeably lower median than the other groups. Because the salary distribution is visibly right skewed and variance fluctuates across the different groups, we conducted a Kruskal-Wallis test where the resulting H and p-values were 67.25 and 5.30e-12 respectively. A small p-value suggests that there is very strong evidence that the differences in `mid_salary` across business areas reflect a real pattern in IBM’s compensation rather than random sampling variation. 
+
+<p align="center">
+  <img src="./Figures/midsalary_by_areaofwork.png" alt="mid salary boxplot by area of work" width="500"><br>
+  <em>Figure 7: mid_salary Distribution by area_of_work</em>
+</p>
+
+Across position types, the difference in salary levels is noticeably greater. Professional roles have a median of around $173,000, while Entry level positions have a median of around $113,000. Conducting another Kruskal-Wallis test shows that H is approximately 295.37 and p is approximately 9.99e-64 which suggests that position type is an important driver of compensation in this dataset. 
+
+<p align="center">
+  <img src="./Figures/midsalary_by_positiontype.png" alt="mid salary boxplot by position type" width="500"><br>
+  <em>Figure 8: mid_salary Distribution by position_type</em>
+</p>
+
+Across required education, there is a clear ordinal pattern with High School Diploma/GED postings having a median around $112,000, Bachelor’s around $158,000, and Master’s around $196,500. The Doctorate group has the highest median but with very few postings, and the Kruksal-Wallis test is again significant. Because education is naturally ordered, this finding motivates the need for encoding required education and preferred education as ordinal levels in feature engineering rather than one-hot dummy variables. 
+
+<p align="center">
+  <img src="./Figures/midsalary_by_required_ed.png" alt="mid salary boxplot by required education" width="500"><br>
+  <em>Figure 9: mid_salary Distribution by required_education</em>
+</p>
+
+In addition, we analyze the relationship between `mid_salary` and `salary_range` which results in a strong positive Pearson correlation (r = 0.81). This means that higher paying job postings also have wider posted bands and aligns with the idea that senior roles allow more compensation flexibility and negotiation. 
+
+<p align="center">
+  <img src="./Figures/salary_range_vs_mid_salary.png" alt="mid salary vs salary range scatter plot" width="500"><br>
+  <em>Figure 10: salary_range vs mid_salary </em>
+</p>
+
+Finally, area of work and position type are not independent of each other. A Chi-Square test rejects independence ($\chi^2$ = 112.78, dof = 21, p = 1.48e-14) and Cramer’s V = 0.29 indicates a moderate association. Certain areas such as Consulting are disproportionately professional, while others contain more entry-level and internship positions. This means that salary gaps between business areas come from two sources: real differences in pay across areas, and some areas hire more senior individuals than others. This is an important finding that would be accommodated in the modeling stage. 
+
+<p align="center">
+  <img src="./Figures/areaofwork_positiontype_heatmap.png" alt="row normalized heat map between area of work and position type" width="500"><br>
+  <em>Figure 11: Heat Map of area_of_work x position_type</em>
+</p>
+
+### Skill Keyword Analysis
+The unstructured `preferred_technical_experience` field was tokenized using a curated vocabulary of single-world and multi-word skill terms, and phrases like “machine learning” matched before single tokens to avoid double counting. Among the 470 postings with a valid `mid_salary`, AI-related keywords lead with “ai” appearing in 14.3% of postings followed by “agile” (10.6%), “python” (9.1%), and “aws” (7.4%). The prominence of AI keywords is consistent with IBM’s recent strategic emphasis on generative AI, and the broader top-10 keywords reflect a focus on and need for cloud and data engineering skills. 
+
+<p align="center">
+  <img src="./Figures/top_keywords_technical_exp.png" alt="top 20 keywords in preferred technical experience" width="500"><br>
+  <em>Figure 12: Top 20 Skill Keywords in Preferred Technical Experience</em>
+</p>
+
+A comparison of median salary “with skill mentioned” vs. “without skill mentioned” shows that 9 of the top 10 skills have a negative median salary difference. For example, the gap for Linux and Python exceeds $30,000. This reveals possible confounding-by-missingness rather than a result of true skill devaluation. As seen in the data quality section, approximately 19% of postings have `preferred_technical_experience` missing, and this missing count is concentrated in higher paying non-technical roles. More specifically, approximately 30% are missing in Consulting, 24% in Sales, and 24% among Professional-level postings. The “without skill” reference group is therefore heavily weighted toward senior, high-paid, non-technical postings which inflates the baseline. SAP is seen as an exception because it is the one skill in the top 10 concentrated in those higher paid Consulting roles. 27 of 31 SAP postings are in Consulting, and 26 of these 31 are also at the Professional level, dominated by Senior Management Consultant titles. This is an important finding for modeling: skill-salary marginals from this raw text field reflect role compensation more than skill value. Therefore, skills should be brought into the model as binary indicator features which can be seen later in Section 6.7 of the jupyter notebook. 
+
+<p align="center">
+  <img src="./Figures/salary_premium_by_skill_mention.png" alt="median salary difference by skill mention" width="500"><br>
+  <em>Figure 13: Median Salary Difference by Top 10 Skill Mentions</em>
+</p>
+
+### Time Trends and Outlier Checks 
+
+Posting volume is heavily concentrated near the end of the observation window, with January 2026 alone accounting for 261 of the 469 postings (55%) and the earlier months are substantially sparser. The weekly view in Figure XX confirms a sharp increase in job postings. Counts climbed from 27 in the week of January 5, 2026 to 58, 61, and 115 in successive weeks, peaking at the end of February. 
+
+<p align="center">
+  <img src="./Figures/weekly_posting_counts.png" alt="Weekly posting counts" width="500"><br>
+  <em>Figure 14: Weekly Posting Counts</em>
+</p>
+
+The monthly median `mid_salary` follows a similar trajectory where compensation levels hover at around $107,000 in November 2025 before rising to $120,000 in December 2025 and then $155,750 in January 2026. Salary then drops to $141,000 in February. Because position type is the dominant salary driver and Professional-level postings spike the most during this same January surge, the apparent salary uptrend is likely a compositional effect. January specifically attracts a heavier mix of professional roles and is when companies typically resume their hiring after the holidays. 
+
+
+<p align="center">
+  <img src="./Figures/monthly_mid_salary.png" alt="Monthly mid salary" width="500"><br>
+  <em>Figure 15: Monthly mid_salary Levels</em>
+</p>
+
+<p align="center">
+  <img src="./Figures/jobpostingvolbypostypeovertime.png" alt="Job Posting Volume by position type over time" width="500"><br>
+  <em>Figure 16: Job Posting Volume by Position Type Over Time</em>
+</p>
+
+Outlier detection on `mid_salary` using the standard 1.5 IQR rule flags a small number of high end postings with `max_salary_num` reaching $410,000. Manual inspection of the top 10 highest paid job postings confirmed they are primarily senior Consulting and Engineering roles, so they were retained in the dataset. It is also important to note that throughout our EDA, we report medians and quantiles to preserve robustness rather than means. 
+
+<p align="center">
+  <img src="./Figures/missing_pref_ed_by_pos_type.png" alt="Job Posting Volume by position type over time" width="500"><br>
+  <em>Figure 17: Missing Rate of preferred_education by position_type</em>
+</p>
+
+<p align="center">
+  <img src="./Figures/missingrate_pref_tech_exp_by_pos_type.png" alt="Job Posting Volume by position type over time" width="500"><br>
+  <em>Figure 18: Missing Rate of preferred_technical_experience by position_type/em>
+</p>
+
+<p align="center">
+  <img src="./Figures/missing_pref_tech_exp_by_area_of_work.png" alt="Missing rate of preferred tech experience by area of work " width="500"><br>
+  <em>Figure 19: Missing Rate of preferred_technical_experience by area_of_work</em>
+</p>
+
+A final missingness check showed that the missingness rates of `preferred_education` and `preferred_technical_experience` vary across both position type and area of work. This reinforces an earlier discovery that missingness in these fields is indeed informative and should be treated as “no requirement” for these specific fields. 
+
+### EDA Summary 
+Overall, the Exploratory Data Analysis establishes three key findings that drive the remainder of our project. First, position type is the dominant driver of salary, followed by area of work and required education. These dimensions themselves are correlated with each other, which we will dive deeper into in Feature Engineering. Second, salary is right-skewed and benefits from a log transformation for modeling. Third, missingness in the preferred experience and preferred education fields is non-random and concentrated in high paying segments which informs downstream feature engineering decisions.
+
 
 ## 3. Feature Engineering & Preprocessing
 
