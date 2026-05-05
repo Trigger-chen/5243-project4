@@ -1,36 +1,51 @@
 # IBM Job Posting Data Science Analysis
 
+This repository contains the full pipeline, data, and deployment components for the final STAT5243 project.
+
 ## Project Overview
-This project documents an end-to-end data science pipeline for predicting salary from publicly available IBM job postings. The dataset is acquired by web-scraping IBM's careers site, cleaned and prepared, explored through descriptive and inferential analysis, transformed via feature engineering, and used to train and compare three supervised learning models: Random Forest, Ridge Regression, and Gradient Boosting.
+This project documents an end-to-end data science pipeline for predicting salary from publicly available IBM job postings. The dataset is obtained via web scraping IBM's careers website and subsequently cleaned, explored, and transformed through feature engineering. The processed data is then used to train and compare multiple supervised learning models: Random Forest, Ridge Regression, and Gradient Boosting.
 
 The central research question is: Based on IBM's posted job listings, how accurately can we predict salary, and which features are the primary drivers of compensation?
 
 ## Repository Structure 
 ```text
 5243-project4/
-|
+│
 ├── data/
 │   ├── ibm_scraping.ipynb               # Selenium-based web scraper notebook
-│   ├── ibm_jobs_raw.csv                 # Raw scraped dataset (478 postings × 11 columns)
-│   └── ibm_jobs_final_processed.csv     # Cleaned + feature-engineered dataset
+│   ├── ibm_jobs_raw.csv                 # Raw scraped dataset
+│   └── ibm_jobs_final_processed.csv     # Final cleaned dataset
 │
-├── project_4_new.ipynb                  # Main analysis notebook (cleaning → EDA → modeling)
-├── model_evaluation_and_selection.ipynb # Final model comparison and selection
-│
-├── Figures/                             # Saved EDA and modeling figures (.png)
+├── Figures/                             # Saved figures used in report
 │   └── model_images/                    # Plots from supervised modeling section
 │
-├── result/
-│   ├── ridge_regression_results.xls
-│   └── unsupervised result/
-│       ├── ibm_jobs_with_unsupervised_results.csv  # Dataset with cluster + outlier labels
-│       ├── cluster_profile_summary.csv             # Numeric K-means cluster profiles
-│       ├── cluster_categorical_profile.csv         # Categorical K-means cluster profiles
-│       ├── salary_summary_by_cluster.csv           # Salary stats per cluster
-│       └── outlier_postings.csv                    # Postings flagged by Isolation Forest
+├── Result/
+│   └── model result/                    # Supervised model outputs
+│       ├── model_results.xls
+│       ├── ridge_regression_results.xls   
+│       ├── rmse_comparison.png
+│       └── r2_comparison.png
 │
-├── 5243_Final_Project__model_evaluation_and_selection_.pdf  # Model evaluation report (PDF)
-├── report.md                            # Final project report (Markdown source)
+├── result/
+│   └── unsupervised result/             # Clustering and outlier outputs
+│       ├── ibm_jobs_with_unsupervised_results.csv # Dataset with cluster + outlier labels
+│       ├── cluster_profile_summary.csv            # Numeric K-means cluster profiles
+│       ├── cluster_categorical_profile.csv        # Categorical K-means cluster profiles
+│       ├── salary_summary_by_cluster.csv          # Salary stats per cluster
+│       └── outlier_postings.csv                   # Postings flagged by Isolation Forest
+│
+├── web/                                 # Shiny dashboard application
+│   ├── app.R                            # Main Shiny app
+│   ├── 5243-project4.Rproj              # RStudio project file
+│   ├── data/                            # Local copy of dataset for app
+│   │   └── ibm_jobs_final_processed.csv # Dataset used for Shiny app
+│   └── .Rproj.user/                     # RStudio metadata (ignore)
+│
+├── project_4_new.ipynb                  # Main analysis notebook
+├── 5243_Final_Project__model_evaluation_and_selection_.pdf
+├── report.md                            # Final report
+├── ridge_regression_results.xls         # (duplicate output at root)
+├── rmse_comparison.png                  # (duplicate output at root)
 └── README.md
 ```
 
@@ -99,7 +114,7 @@ We produced a dashboard using Shiny to allow users to conduct EDA, feature engin
 ```bash
 pip install pandas numpy matplotlib scipy scikit-learn selenium
 ```
-Note that this requires `scitkit-learn >= 1.4` for use of `root_mean_squared_error`. 
+Note that this requires `scikit-learn >= 1.4` for use of `root_mean_squared_error`. 
 
 ### Reproducing the Pipeline
 
@@ -108,6 +123,18 @@ Note that this requires `scitkit-learn >= 1.4` for use of `root_mean_squared_err
 2. **Run the main analysis.** Open `project_4_new.ipynb` and run all cells in order. The notebook reads `data/ibm_jobs_raw.csv` and produces inline EDA figures and statistical-test outputs, the cleaned/processed dataset (`data/ibm_jobs_final_processed.csv`), saved figures (in `Figures/`), and the unsupervised learning outputs (in `result/unsupervised result/`).
 
 3. **Run final model comparison.** Open `model_evaluation_and_selection.ipynb` to reproduce the final supervised-model evaluation and selection.
+
+4. **Run the Shiny App locally**
+- Open  Studio
+- Install required packages
+```
+install.packages(c("shiny", "dplyr", "ggplot2", "plotly", "DT", "readr", "tidyr"))
+```
+- Run the app:
+```bash
+shiny::runApp("web/app.R")
+```
+**Note**: a copy of the processed dataset is included in web/data/ to support the Shiny application. The canonical dataset is located in data/. 
 
 ## Notes
 
