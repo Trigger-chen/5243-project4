@@ -83,6 +83,10 @@ The pipeline is implemented across `data/ibm_scraping.ipynb` (data acquisition),
 
 8. **Model Comparison and Selection.** Quantitative comparison via RMSE, MAE, and R², combined with qualitative considerations (interpretability, robustness) to select a final model. See `model_evaluation_and_selection.ipynb`.
 
+## Shiny Application 
+We produced a dashboard using Shiny to allow users to conduct EDA, feature engineering, unsupervised learning, and modeling using our scraped IBM dataset. The application can be accessed here: https://baixuanchen5243.shinyapps.io/5243-project4/
+
+
 ## How to Run
 
 ### Requirements
