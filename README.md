@@ -125,7 +125,7 @@ Note that this requires `scikit-learn >= 1.4` for use of `root_mean_squared_erro
 3. **Run final model comparison.** Open `model_evaluation_and_selection.ipynb` to reproduce the final supervised-model evaluation and selection.
 
 4. **Run the Shiny App locally**
-- Open  Studio
+- Open  R or RStudio
 - Install required packages
 ```
 install.packages(c("shiny", "dplyr", "ggplot2", "plotly", "DT", "readr", "tidyr"))
@@ -134,12 +134,13 @@ install.packages(c("shiny", "dplyr", "ggplot2", "plotly", "DT", "readr", "tidyr"
 ```bash
 shiny::runApp("web/app.R")
 ```
-**Note**: a copy of the processed dataset is included in web/data/ to support the Shiny application. The canonical dataset is located in data/. 
+A copy of the processed dataset is included in web/data/ to support the Shiny application. The canonical dataset is located in data/. 
 
 ## Notes
 
-- **The web scraped data is a snapshot and not a live feed.** The dataset represents IBM's open postings at the moment of scraping (postings dated August 2025 through February 2026). Re-scraping the website will produce a different snapshot of the data. 
-- **End-loaded posting volume.** Roughly 55% of postings in the dataset are dated January 2026, with earlier months being a lot sparser. This implies that older postings tend to be filled and removed before the web scrape runs. 
-- **Sample size.** With ~470 postings after cleaning, the dataset is modest. The pipeline is designed to be reproducible on larger snapshots if more data is collected over time.
+- **The web scraped data is a snapshot and not a live feed:** The dataset represents IBM's open postings at the moment of scraping (postings dated August 2025 through February 2026). Re-scraping the website will produce a different snapshot of the data. 
+- **End-loaded posting volume:** Roughly 55% of postings in the dataset are dated January 2026, with earlier months being a lot sparser. This implies that older postings tend to be filled and removed before the web scrape runs. 
+- **Sample size:** With ~470 postings after cleaning, the dataset is modest. The pipeline is designed to be reproducible on larger snapshots if more data is collected over time.
+- **Repository:** A copy of the processed dataset is included in web/data/ to support the Shiny application. The canonical dataset is located in data/. 
 
 
