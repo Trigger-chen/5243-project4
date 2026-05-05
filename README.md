@@ -95,6 +95,7 @@ The pipeline is implemented across `data/ibm_scraping.ipynb` (data acquisition),
 ```bash
 pip install pandas numpy matplotlib scipy scikit-learn selenium
 ```
+Note that this requires `scitkit-learn >= 1.4` for use of `root_mean_squared_error`. 
 
 ### Reproducing the Pipeline
 
