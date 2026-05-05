@@ -21,8 +21,24 @@ This report follows the standard workflow:
 
 ## 1. Data Acquisition & Preparation
 
-The dataset was acquired by scraping IBM’s public careers website and was filtered to job postings located in the United States. Because the careers site renders job listings dynamically through JavaScript rather than as a static HTML, a request-based scraper such as BeautifulSoup would not have been sufficient, so we used Selenium to extract its content. All of the code used for acquiring the data is found in ibm_scraping.ipynb. The raw scraped dataset `ibm_jobs.csv` contains 478 rows and 11 columns, with each row representing a single job posting and columns covering structural metadata (i.e. job ID, job title, posting date, state/province), role attributes (area of work, position type), educational requirements (required and preferred), unstructured textual descriptions of preferred technical experience, and posted salary endpoints (min and max salary). Here, salary is the primary outcome of interest. 
- 
+The dataset was acquired by scraping IBM’s public careers website and was filtered to job postings located in the United States. Because the careers site renders job listings dynamically through JavaScript rather than as a static HTML, a request-based scraper such as BeautifulSoup would not have been sufficient, so we used Selenium to extract its content. All of the code used for acquiring the data is found in ibm_scraping.ipynb. The raw scraped dataset `ibm_jobs_raw.csv` contains 478 rows and 11 columns, with each row representing a single job posting and columns covering structural metadata (i.e. job ID, job title, posting date, state/province), role attributes (area of work, position type), educational requirements (required and preferred), unstructured textual descriptions of preferred technical experience, and posted salary endpoints (min and max salary). Here, salary is the primary outcome of interest. 
+
+**Table 1:** Data Dictionary 
+| Column | Description |
+|---|---|
+| `job_title` | Job title as posted (e.g., "Senior Software Engineer") |
+| `job_id` | Unique IBM-assigned posting identifier |
+| `date_posted` | Posting date in `DD-MMM-YYYY` format |
+| `state_province` | State(s) where the role is based; may contain multiple comma-separated states |
+| `area_of_work` | Business area (e.g., Software Engineering, Consulting, Sales) |
+| `min_salary` | Projected minimum annual salary (USD) |
+| `max_salary` | Projected maximum annual salary (USD) |
+| `position_type` | Role level: Professional, Entry Level, Internship, or Administration & Technician |
+| `required_education` | Minimum required education (e.g., Bachelor's Degree) |
+| `preferred_education` | Preferred education level (often missing) |
+| `preferred_technical_experience` | Free-text description of preferred technical skills (often missing) |
+
+
 To prepare the raw dataset for downstream analysis, inconsistencies were first addressed. Salary fields were stored as strings with embedded commas, so they were stripped of formatting characters and cast to numeric `min_salary_num` and `max_salary_num` columns. Posting dates, which appear in a “30-Jan-2026” string format, were parsed into a `date_posted_dt` datetime column. Education values were normalized for casing and whitespace to consolidate near-duplicates, and all string fields were trimmed of leading and trailing whitespace. Additionally, two derived numeric features were created: `mid_salary` and `salary_range`. The former represents the midpoint of the posted salary band using the `min_salary_num` and `max_salary_num` columns, while the latter is the spread between the minimum and maximum. 
 
 Salary validity checks also revealed no logical inconsistencies. There were 0 cases where `min_salary_num` exceeded `max_salary_num`, and there were no non-positive salaries either. On the de-duplicated data, `min_salary_num` had a minimum of 29,120 and a mean of 105,427, while `max_salary_num` reached up to 410,000. `mid_salary` had a median of 134,000 and a mean of 141,138. 
@@ -139,7 +155,7 @@ A comparison of median salary “with skill mentioned” vs. “without skill me
 
 ### Time Trends and Outlier Checks 
 
-Posting volume is heavily concentrated near the end of the observation window, with January 2026 alone accounting for 261 of the 469 postings (55%) and the earlier months are substantially sparser. The weekly view in Figure 14 confirms a sharp increase in job postings. Counts climbed from 27 in the week of January 5, 2026 to 58, 61, and 115 in successive weeks, peaking at the end of February. 
+Posting volume is heavily concentrated near the end of the observation window, with January 2026 alone accounting for 261 of the 469 postings (55%) and the earlier months are substantially sparser. The weekly view in Figure 14 confirms a sharp increase in job postings. Counts climbed from 27 in the week of January 5, 2026 to 58, 61, and 115 in successive weeks, peaking at the end of February. It is important to note however that the current data listed on the IBM website is not the same as the data we used for the project which was scraped from the website at an earlier time. This implies that older postings tend to be filled and removed before the web scrape runs. Therefore, monthly time trends should be interpreted as short-run level shifts rather than long-run trends.
 
 <p align="center">
   <img src="./Figures/weekly_posting_counts.png" alt="Weekly posting counts" width="800"><br>
@@ -161,7 +177,7 @@ The monthly median `mid_salary` follows a similar trajectory where compensation 
 
 Outlier detection on `mid_salary` using the standard 1.5 IQR rule flags a small number of high end postings with `max_salary_num` reaching $410,000. Manual inspection of the top 10 highest paid job postings confirmed they are primarily senior Consulting and Engineering roles, so they were retained in the dataset. It is also important to note that throughout our EDA, we report medians and quantiles to preserve robustness rather than means. 
 
-**Table 1:** Top 10 highest `mid_salary` postings
+**Table 2:** Top 10 highest `mid_salary` postings
 
 | job_id | job_title | date_posted | state_province | area_of_work | position_type | min_salary_num | max_salary_num | mid_salary | salary_range |
 |---|---|---|---|---|---|---|---|---|---|
