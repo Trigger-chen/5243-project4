@@ -11,7 +11,7 @@ To translate this objective into a practical solution, we implement a structured
 
 This report follows the standard workflow: 
 
-- **Data Cleaning and Handling Inconsistencies**: Type conversion, formatting normalization, duplicate removal, missing value handling on the raw scraped data
+- **Data Acquisition and Preparation**: Type conversion, formatting normalization, duplicate removal, missing value handling on the raw scraped data
 - **Exploratory Data Analysis**: Data quality checks, univariate distributions, bivariate and multivariate analysis (including statistical tests), time trends, skill keyword frequency, outlier checks
 - **Data Preprocessing**: Final dataset selection, missing value strategy, rare category pooling, encoding for categorical variables, numerical scaling
 - **Feature Engineering**: Engineering salary variables, date features, location features, ordinal education encoding, job title parsing for seniority signals, skill flags
@@ -21,7 +21,17 @@ This report follows the standard workflow:
 
 ## 1. Data Acquisition & Preparation
 
-Text
+The dataset was acquired by scraping IBM’s public careers website and was filtered to job postings located in the United States. Because the careers site renders job listings dynamically through JavaScript rather than as a static HTML, a request-based scraper such as BeautifulSoup would not have been sufficient, so we used Selenium to extract its content. All of the code used for acquiring the data is found in ibm_scraping.ipynb. The raw scraped dataset `ibm_jobs.csv` contains 478 rows and 11 columns, with each row representing a single job posting and columns covering structural metadata (i.e. job ID, job title, posting date, state/province), role attributes (area of work, position type), educational requirements (required and preferred), unstructured textual descriptions of preferred technical experience, and posted salary endpoints (min and max salary). Here, salary is the primary outcome of interest. 
+ 
+To prepare the raw dataset for downstream analysis, inconsistencies were first addressed. Salary fields were stored as strings with embedded commas, so they were stripped of formatting characters and cast to numeric `min_salary_num` and `max_salary_num` columns. Posting dates, which appear in a “30-Jan-2026” string format, were parsed into a `date_posted_dt` datetime column. Education values were normalized for casing and whitespace to consolidate near-duplicates, and all string fields were trimmed of leading and trailing whitespace. Additionally, two derived numeric features were created: `mid_salary` and `salary_range`. The former represents the midpoint of the posted salary band using the `min_salary_num` and `max_salary_num` columns, while the latter is the spread between the minimum and maximum. 
+
+Salary validity checks also revealed no logical inconsistencies. There were 0 cases where `min_salary_num` exceeded `max_salary_num`, and there were no non-positive salaries either. On the de-duplicated data, `min_salary_num` had a minimum of 29,120 and a mean of 105,427, while `max_salary_num` reached up to 410,000. `mid_salary` had a median of 134,000 and a mean of 141,138. It can also be observed that the location field `state_province`contains multiple states in one posting with about 62% of records including comma-separated multi-state strings. 
+
+Furthermore, duplicate value detection revealed seven exact duplicate `job_id` values which were likely a byproduct of the web scraping process recapturing the same job posting. We removed these duplicate values on `job_id` to produce a final dataset of 471 unique postings.
+
+To initially handle any missing values, any observations missing `min_salary`, `max_salary`, and `job_title` were dropped since a posting’s outcome variable cannot be defined without salary. We also discovered that missingness was concentrated in a small number of columns with `preferred_education` missing in 123 out of 478 rows (25.73%) and with `preferred_technical_experience` missing in 92 out of the 478 rows (19.25%).  Any NaN values in `preferred_technical_experience` were filled with an empty string, while any NaN values in `area_of_work` were replaced with the string “unknown”.  
+
+After initial data cleaning and preparation, the analysis-ready dataset spans a posting window from August 14, 2025 to February 4, 2026 with `min_salary_num` ranging from $29,120 to $275,000 and `max_salary_num` reaching up to $410,000. The median `mid_salary` is approximately $137,000. 
 
 ## 2. Exploratory Data Analysis (EDA)
 
