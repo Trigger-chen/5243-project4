@@ -395,10 +395,21 @@ Visually, all three reflected similar performances across the testing dataset, w
 
 While both models' result proved our hypothesis that critical factors including job level and education level would affect the salary, random forest shows a much better distribution across these features. The feature importances are calculated using Mean Decrease Impurity (MDI): the higher the value, the purer the descendent data after this decision node. Random forest's random feature selection feature provides a more balanced distribution across features, making the top feature "Professional" having only 0.2939 MDI. On the other hand, continuous learning for gradient boosting led to high importance of "Professional" with 0.4867 MDI. As a result, random forest makes features much balanced especially when we have hundreds of features.
 
-
 ## 6. Conclusion & Discussion
 
-Text
+This project developed a full end-to-end data science pipeline to predict job salaries using IBM job posting data. Across the workflow, we combined data cleaning, exploratory data analysis, feature engineering, unsupervised learning, and supervised modeling to build and evaluate predictive models.
+
+From the modeling results, tree-based methods significantly outperformed the linear baseline. Ridge regression, while interpretable, was limited by its inability to capture nonlinear relationships among features, especially in the presence of high-dimensional TF-IDF variables. In contrast, both Random Forest and Gradient Boosting demonstrated strong predictive performance, confirming that salary is driven by complex interactions between job characteristics.
+
+Although Gradient Boosting achieved the best overall predictive accuracy, Random Forest was selected as the final model. This decision reflects a trade-off between performance, interpretability, and robustness. The performance gain from Gradient Boosting was relatively small, while Random Forest provides more stable predictions, is less sensitive to hyperparameter tuning, and offers clearer feature importance interpretation. These properties make it more suitable for real-world applications.
+
+Beyond predictive performance, the analysis also provided meaningful insights into salary drivers. Position type emerged as the most influential factor, followed by area of work and education level. Additionally, the strong positive relationship between salary level and salary range suggests that higher-level roles offer greater compensation flexibility. These findings align with expectations of labor market structure within large technology firms.
+
+Despite these strengths, the project has several limitations. First, the dataset is relatively small, with fewer than 500 job postings after cleaning, which may limit model generalizability. Second, the dataset represents a snapshot in time and may not fully capture longer-term hiring trends. Third, missing values in key fields such as preferred technical experience are not random and may introduce bias into the model.
+
+Future work could address these limitations by expanding the dataset through repeated web scraping over time, incorporating additional features such as geographic cost-of-living adjustments, and exploring more advanced modeling techniques such as regularized gradient boosting or neural networks. Additionally, improving text feature extraction beyond TF-IDF could further enhance model performance.
+
+Overall, this project demonstrates that job salary prediction is both feasible and informative, and highlights the importance of combining predictive modeling with interpretability and domain understanding when making real-world decisions.
 
 ## 7. Group member contributions
 
