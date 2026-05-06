@@ -56,9 +56,9 @@ To prepare the raw dataset for downstream analysis, inconsistencies were first a
 
 Salary validity checks also revealed no logical inconsistencies. There were 0 cases where `min_salary_num` exceeded `max_salary_num`, and there were no non-positive salaries either. On the de-duplicated data, `min_salary_num` had a minimum of 29,120 and a mean of 105,427, while `max_salary_num` reached up to 410,000. `mid_salary` had a median of 134,000 and a mean of 141,138. 
 
-Furthermore, duplicate value detection revealed seven exact duplicate `job_id` values which were likely a byproduct of the web scraping process recapturing the same job posting. We removed these duplicate values on `job_id` to produce a final dataset of 471 unique postings used for EDA analysis. 
+We discovered that missingness was concentrated in a small number of columns with `preferred_education` missing in 123 out of 478 rows (25.73%) and with `preferred_technical_experience` missing in 92 out of the 478 rows (19.25%).  Any NaN values in `preferred_technical_experience` were filled with an empty string, while any NaN values in `area_of_work` were replaced with the string “unknown”. To handle any missing values, any observations missing `min_salary`, `max_salary`, and `job_title` were dropped since a posting’s outcome variable cannot be defined without salary. 
 
-To initially handle any missing values, any observations missing `min_salary`, `max_salary`, and `job_title` were dropped since a posting’s outcome variable cannot be defined without salary. We also discovered that missingness was concentrated in a small number of columns with `preferred_education` missing in 123 out of 478 rows (25.73%) and with `preferred_technical_experience` missing in 92 out of the 478 rows (19.25%).  Any NaN values in `preferred_technical_experience` were filled with an empty string, while any NaN values in `area_of_work` were replaced with the string “unknown”.  
+Furthermore, duplicate value detection revealed seven exact duplicate `job_id` values which were likely a byproduct of the web scraping process recapturing the same job posting. After removing duplicate job postings based on job_id and dropping observations missing core fields requiring for analysis (min_salary, max_salary, or job_title), the final cleaned dataset used for EDA analysis contained 469 usable postings. 
 
 <p align="center">
   <img src="./Figures/missing_value_count.png" alt="Missing value counts by column" width="800"><br>
@@ -75,7 +75,7 @@ How do individual variables distribute?
 How does salary relate to different job attributes?
 How do these patterns shift over time?
 
-The objective of this section is to both characterize the dataset and to identify key relationships that should inform the decisions we make for feature engineering and supervised modeling later down the pipeline. All subsequent analyses have been performed on the de-duplicated dataset of 471 unique job postings. 
+The objective of this section is to both characterize the dataset and to identify key relationships that should inform the decisions we make for feature engineering and supervised modeling later down the pipeline. All subsequent analyses were performed on the final cleaned dataset of 469 usable job postings after duplicate removal and removal of postings missing core salary or title information. 
 
 ### Univariate Distributions
 
@@ -1157,7 +1157,7 @@ Visually, all three reflected similar performances across the testing dataset, w
 |---|---|
 | ![](./Figures/model_images/random_forest_top20.png) | ![](./Figures/model_images/gradient_boosting_top20.png) |
 
-While both models' result proved our hypothesis that critical factors including job level and education level would affect the salary, random forest shows a much better distribution across these features. The feature importances are calculated using Mean Decrease Impurity (MDI): the higher the value, the purer the descendent data after this decision node. Random forest distributes importance across many decorrelated trees which can reduce dominance by a single feature compared to sequential boosting methods.  We see that with the results of Random Forest that the top feature is "Professional" with only 0.2939 MDI. On the other hand, continuous learning for gradient boosting led to high importance of "Professional" with 0.4867 MDI. As a result, random forest makes features much balanced especially when we have hundreds of features.
+While both models' result proved our hypothesis that critical factors including job level and education level would affect the salary, random forest shows a much better distribution across these features. The feature importances are calculated using Mean Decrease Impurity (MDI): the higher the value, the purer the descendent data after this decision node. Random forest distributes importance across many decorrelated trees which can reduce dominance by a single feature compared to sequential boosting methods, and we see with the results of Random Forest that the top feature is "Professional" with only 0.2939 MDI. On the other hand, continuous learning for gradient boosting led to high importance of "Professional" with 0.4867 MDI. As a result, random forest makes features much balanced especially when we have hundreds of features.
 
 ## 7. Interactive Shiny Dashboard
 
