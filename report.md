@@ -1,6 +1,10 @@
-# IBM Job Posting Analysis
+# IBM Job Salary Analysis Project
 
-Group 16: Baixuan Chen, Zhonghao Liu, Jisheng Zeng, Daisy Zhou
+**GitHub Repository:** [https://github.com/Trigger-chen/5243-project4](https://github.com/Trigger-chen/5243-project4)
+
+**Shiny Dashboard:** [https://baixuanchen5243.shinyapps.io/5243-project4/](https://baixuanchen5243.shinyapps.io/5243-project4/)
+
+Group 16: Baixuan Chen(bc3212), Zhonghao Liu(zl3593), Jisheng Zeng(jz3993), Daisy Zhou(dz2590)
 
 ## Introduction
 This project documents an end-to-end data science pipeline for predicting salaries from publicly available job postings at IBM. The main research question that we aim to solve with this dataset is: Based on the IBM job posting data, how accurately can we predict salary, and which features are the primary drivers for this prediction? 
@@ -9,34 +13,42 @@ Salary transparency has become increasingly important as pay disclosure laws exp
 
 To translate this objective into a practical solution, we implement a structured data science pipeline that encompasses data preparation, exploratory analysis, feature engineering, and predictive modeling. 
 
-This report follows the standard workflow: 
+This report follows the standard data science workflow:
 
-- **Data Acquisition and Preparation**: Type conversion, formatting normalization, duplicate removal, missing value handling on the raw scraped data
-- **Exploratory Data Analysis**: Data quality checks, univariate distributions, bivariate and multivariate analysis (including statistical tests), time trends, skill keyword frequency, outlier checks
-- **Data Preprocessing**: Final dataset selection, missing value strategy, rare category pooling, encoding for categorical variables, numerical scaling
-- **Feature Engineering**: Engineering salary variables, date features, location features, ordinal education encoding, job title parsing for seniority signals, skill flags
-- **Unsupervised Learning**: Correlation analysis, PCA for dimensionality reduction, K-means clustering, additional outlier detection
-- **Supervised Learning**: Random Forest, Ridge Regression, and Gradient Boosting modeling with cross-validation, hyperparameter tuning, and evaluation against held-out test data
-- **Model Comparison and Selection**: Quantitative comparison RMSE, MAE, and R^2 metrics with qualitative considerations (interpretability, robustness) to select a final model
+- **Data Acquisition and Preparation**: Scraping IBM job postings, type conversion, formatting normalization, duplicate removal, and missing value handling on the raw data.
 
+- **Exploratory Data Analysis**: Data quality checks, univariate distributions, bivariate and multivariate analysis, time trends, skill keyword frequency, and outlier checks.
+
+- **Data Preprocessing**: Final dataset selection, missing value strategy, rare category handling, categorical encoding, numerical scaling, and leakage prevention before modeling.
+
+- **Feature Engineering**: Creating salary-related variables, date features, location features, ordinal education encodings, seniority indicators from job titles, role-category indicators, and skill flags.
+
+- **Unsupervised Learning**: Using correlation analysis, PCA dimensionality reduction, K-Means clustering, and Isolation Forest outlier detection to understand hidden structure in the job postings.
+
+- **Supervised Learning**: Training Ridge Regression, Random Forest, and Gradient Boosting models to predict log-transformed midpoint salary, with cross-validation, hyperparameter tuning, and held-out test evaluation.
+
+- **Model Comparison and Selection**: Comparing models using RMSE, MAE, and R², while also considering interpretability, robustness, and practical prediction performance to select the final model.
+
+- **Dashboard Development**: Building an interactive Shiny dashboard to present dataset summaries, EDA results, feature engineering outputs, unsupervised learning findings, and supervised modeling results.
 ## 1. Data Acquisition & Preparation
 
 The dataset was acquired by scraping IBM’s public careers website and was filtered to job postings located in the United States. Because the careers site renders job listings dynamically through JavaScript rather than as a static HTML, a request-based scraper such as BeautifulSoup would not have been sufficient, so we used Selenium to extract its content. All of the code used for acquiring the data is found in ibm_scraping.ipynb. The raw scraped dataset `ibm_jobs_raw.csv` contains 478 rows and 11 columns, with each row representing a single job posting and columns covering structural metadata (i.e. job ID, job title, posting date, state/province), role attributes (area of work, position type), educational requirements (required and preferred), unstructured textual descriptions of preferred technical experience, and posted salary endpoints (min and max salary). Here, salary is the primary outcome of interest. 
 
-**Table 1:** Data Dictionary 
+**Table 1: Data Dictionary**
+
 | Column | Description |
-|---|---|
-| `job_title` | Job title as posted (e.g., "Senior Software Engineer") |
-| `job_id` | Unique IBM-assigned posting identifier |
-| `date_posted` | Posting date in `DD-MMM-YYYY` format |
-| `state_province` | State(s) where the role is based; may contain multiple comma-separated states |
-| `area_of_work` | Business area (e.g., Software Engineering, Consulting, Sales) |
-| `min_salary` | Projected minimum annual salary (USD) |
-| `max_salary` | Projected maximum annual salary (USD) |
-| `position_type` | Role level: Professional, Entry Level, Internship, or Administration & Technician |
-| `required_education` | Minimum required education (e.g., Bachelor's Degree) |
-| `preferred_education` | Preferred education level (often missing) |
-| `preferred_technical_experience` | Free-text description of preferred technical skills (often missing) |
+|:---|:---|
+| `job_title` | Job title as posted, such as "Senior Software Engineer". |
+| `job_id` | Unique IBM-assigned posting identifier. |
+| `date_posted` | Posting date in `DD-MMM-YYYY` format. |
+| `state_province` | State or states where the role is based; may contain multiple comma-separated states. |
+| `area_of_work` | Business area, such as Software Engineering, Consulting, or Sales. |
+| `min_salary` | Projected minimum annual salary in USD. |
+| `max_salary` | Projected maximum annual salary in USD. |
+| `position_type` | Role level, such as Professional, Entry Level, Internship, or Administration & Technician. |
+| `required_education` | Minimum required education, such as Bachelor's Degree. |
+| `preferred_education` | Preferred education level; often missing. |
+| `preferred_technical_experience` | Free-text description of preferred technical skills; often missing. |
 
 
 To prepare the raw dataset for downstream analysis, inconsistencies were first addressed. Salary fields were stored as strings with embedded commas, so they were stripped of formatting characters and cast to numeric `min_salary_num` and `max_salary_num` columns. Posting dates, which appear in a “30-Jan-2026” string format, were parsed into a `date_posted_dt` datetime column. Education values were normalized for casing and whitespace to consolidate near-duplicates, and all string fields were trimmed of leading and trailing whitespace. Additionally, two derived numeric features were created: `mid_salary` and `salary_range`. The former represents the midpoint of the posted salary band using the `min_salary_num` and `max_salary_num` columns, while the latter is the spread between the minimum and maximum. 
@@ -216,212 +228,989 @@ Overall, the Exploratory Data Analysis establishes three key findings that drive
 
 ## 3. Feature Engineering & Preprocessing
 
-Text
+After completing the initial data cleaning and exploratory analysis, we transformed the analysis-ready job posting dataset into a model-ready dataset. The goal of this step was to construct features that capture salary-relevant information while avoiding data leakage from salary variables.
 
-## 4. Model Development
+The feature engineering process focused on five main sources of predictive information: salary transformations, posting date, location, education requirements, job title structure, and preferred technical experience.
 
-With our categorical, numerical, and TF-IDF features constructed in the "Feature Engineering" part, we wanted to develop our model for one goal: predict the log midpoint salary based on our features. The features $X$ and targets $y$ were already being defined previously, and we performed a 75/25 train-test split for three models: random forest, gradient boost, and ridge regression.
+### 3.1 Target Variable Construction
 
-### 4.1 Three models we chose
+The original salary information was provided as a minimum and maximum posted salary. To create a single continuous target variable, we computed the midpoint salary:
 
-- We chose **random forest** because it was an improvement over bagging that selected only a portion of features for each tree, which increased accuracy and robustness against overfitting. For our scenario with hundreds of features, it would be a great method to aggregate the decision trees covering different features, especially when a significant portion of our features are TF-IDF.
-- We also chose **gradient boosting** because its sequential error-correction mechanism fundamentally differed from random forest's parallel averaging. Each tree explicitly targeted the residuals of the previous ensemble, which we expected this approach to capture patterns that averaging alone might miss.
-- Finally, we chose **ridge regression** as a linear baseline to contrast with the two tree methods. With our prior knowledge of how certain features like job/education level are related, ridge regression would keep these features stable and spread the weight more evenly across.
+$$
+mid\_salary = \frac{min\_salary + max\_salary}{2}
+$$
 
-### 4.2 Parameters for hyperparameter tuning
+Because the salary distribution was right-skewed, we used a log transformation of the midpoint salary as the supervised learning target:
 
-*Note: the first value listed for each variable was used for baseline.*
+$$
+log\_mid\_salary = \log(mid\_salary)
+$$
+
+This transformation reduces the influence of extremely high salaries and makes the target distribution more suitable for regression models. The raw salary endpoint variables, including `min_salary`, `max_salary`, `min_salary_num`, `max_salary_num`, `mid_salary`, and other salary-derived columns, were excluded from the predictor matrix to prevent data leakage.
+
+### 3.2 Salary Range Features
+
+Although salary variables cannot be used directly as predictors in the supervised salary prediction task, they were useful during EDA and feature understanding. We created several salary-related variables:
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 28%; text-align: left;">Feature</th>
+      <th style="width: 72%; text-align: left;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><code>mid_salary</code></td>
+      <td style="vertical-align: top;">Midpoint between minimum and maximum salary.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>salary_range</code></td>
+      <td style="vertical-align: top;">Difference between maximum and minimum salary.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>salary_range_pct</code></td>
+      <td style="vertical-align: top;">Salary range divided by midpoint salary.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>min_to_max_ratio</code></td>
+      <td style="vertical-align: top;">Ratio between minimum and maximum salary.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>log_mid_salary</code></td>
+      <td style="vertical-align: top;">Log-transformed midpoint salary used as the target.</td>
+    </tr>
+  </tbody>
+</table>
+
+The `salary_range` feature helped us understand how compensation flexibility differs across roles. However, because these variables are directly derived from the target salary information, they were removed before supervised model training.
+
+### 3.3 Date Features
+
+The posting date was converted from string format into a datetime object. From this date variable, we engineered several time-related features:
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 28%; text-align: left;">Feature</th>
+      <th style="width: 72%; text-align: left;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><code>days_since_posted</code></td>
+      <td style="vertical-align: top;">Number of days between the posting date and the most recent posting date in the dataset.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>posted_year</code></td>
+      <td style="vertical-align: top;">Year of the job posting.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>posted_month</code></td>
+      <td style="vertical-align: top;">Month of the job posting.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>posted_dow</code></td>
+      <td style="vertical-align: top;">Day of week of the posting.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>posted_is_weekend</code></td>
+      <td style="vertical-align: top;">Indicator for whether the posting was made on a weekend.</td>
+    </tr>
+  </tbody>
+</table>
+
+These features allow the model to capture possible time-related hiring patterns, such as monthly posting cycles or short-run changes in job composition.
+
+### 3.4 Location Features
+
+The `state_province` field often listed multiple states in one posting, indicating that many IBM roles are flexible across several locations. Since directly one-hot encoding the raw location string would create noisy and sparse features, we engineered more interpretable location variables.
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 28%; text-align: left;">Feature</th>
+      <th style="width: 72%; text-align: left;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><code>states_list</code></td>
+      <td style="vertical-align: top;">Parsed list of states from the raw <code>state_province</code> field.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>n_states_listed</code></td>
+      <td style="vertical-align: top;">Number of states listed in the posting.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>is_multi_state_posting</code></td>
+      <td style="vertical-align: top;">Indicator for whether a posting lists more than one state.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>primary_state</code></td>
+      <td style="vertical-align: top;">First state listed in the posting.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>primary_region</code></td>
+      <td style="vertical-align: top;">Coarse U.S. region mapped from <code>primary_state</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+The `primary_region` variable reduces location complexity while preserving broad geographic salary patterns. The multi-state indicator also captures whether a job is tied to a single location or represents a more flexible hiring region.
+
+<p align="center">
+  <img src="./Figures/feature_region_salary.png" alt="Median salary by primary region" width="800"><br>
+  <em>Figure 20: Median mid salary by primary region</em>
+</p>
+
+Figure 20 shows that median salary differs across broad U.S. regions. Postings assigned to the West have the highest median midpoint salary, followed by the South, Midwest, and Northeast. This supports our decision to transform the raw `state_province` field into a more interpretable `primary_region` feature.
+
+### 3.5 Education Encoding
+
+Education requirements are naturally ordered, so we encoded them using ordinal levels rather than treating them only as nominal categories.
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 60%; text-align: left;">Education Level</th>
+      <th style="width: 40%; text-align: left;">Encoded Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="vertical-align: top;">Unknown</td><td style="vertical-align: top;">0</td></tr>
+    <tr><td style="vertical-align: top;">High School Diploma/GED</td><td style="vertical-align: top;">1</td></tr>
+    <tr><td style="vertical-align: top;">Technical Diploma</td><td style="vertical-align: top;">2</td></tr>
+    <tr><td style="vertical-align: top;">Associate's Degree/College Diploma</td><td style="vertical-align: top;">3</td></tr>
+    <tr><td style="vertical-align: top;">Bachelor's Degree</td><td style="vertical-align: top;">4</td></tr>
+    <tr><td style="vertical-align: top;">Master's Degree</td><td style="vertical-align: top;">5</td></tr>
+    <tr><td style="vertical-align: top;">Doctorate Degree</td><td style="vertical-align: top;">6</td></tr>
+  </tbody>
+</table>
+
+From this mapping, we created:
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 28%; text-align: left;">Feature</th>
+      <th style="width: 72%; text-align: left;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><code>required_edu_level</code></td>
+      <td style="vertical-align: top;">Ordinal encoding of required education.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>preferred_edu_level</code></td>
+      <td style="vertical-align: top;">Ordinal encoding of preferred education.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>edu_gap_preferred_minus_required</code></td>
+      <td style="vertical-align: top;">Difference between preferred and required education levels.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>has_preferred_edu_specified</code></td>
+      <td style="vertical-align: top;">Indicator for whether preferred education is specified.</td>
+    </tr>
+  </tbody>
+</table>
+
+The education gap feature is useful because postings with higher preferred qualifications than required qualifications may indicate more selective or advanced roles.
+
+### 3.6 Job Title Parsing
+
+Job titles contain important information about seniority and job family. To extract this information, we created binary indicators using keyword and regular expression matching.
+
+Seniority-related features include:
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 28%; text-align: left;">Feature</th>
+      <th style="width: 72%; text-align: left;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="vertical-align: top;"><code>is_intern</code></td><td style="vertical-align: top;">Job title contains internship-related terms.</td></tr>
+    <tr><td style="vertical-align: top;"><code>is_entry</code></td><td style="vertical-align: top;">Job title contains entry-level or junior terms.</td></tr>
+    <tr><td style="vertical-align: top;"><code>is_senior</code></td><td style="vertical-align: top;">Job title contains senior-level terms.</td></tr>
+    <tr><td style="vertical-align: top;"><code>is_lead</code></td><td style="vertical-align: top;">Job title contains lead, principal, or staff terms.</td></tr>
+    <tr><td style="vertical-align: top;"><code>is_manager</code></td><td style="vertical-align: top;">Job title contains manager-related terms.</td></tr>
+    <tr><td style="vertical-align: top;"><code>is_director_plus</code></td><td style="vertical-align: top;">Job title contains director, VP, chief, or executive terms.</td></tr>
+    <tr><td style="vertical-align: top;"><code>is_architect</code></td><td style="vertical-align: top;">Job title contains architect-related terms.</td></tr>
+  </tbody>
+</table>
+
+Role-family indicators include:
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 28%; text-align: left;">Feature</th>
+      <th style="width: 72%; text-align: left;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="vertical-align: top;"><code>role_engineering</code></td><td style="vertical-align: top;">Engineering or developer-related title.</td></tr>
+    <tr><td style="vertical-align: top;"><code>role_data</code></td><td style="vertical-align: top;">Data, analyst, machine learning, or ML-related title.</td></tr>
+    <tr><td style="vertical-align: top;"><code>role_security</code></td><td style="vertical-align: top;">Security, compliance, or risk-related title.</td></tr>
+    <tr><td style="vertical-align: top;"><code>role_product</code></td><td style="vertical-align: top;">Product-related title.</td></tr>
+    <tr><td style="vertical-align: top;"><code>role_design</code></td><td style="vertical-align: top;">Design, UX, or UI-related title.</td></tr>
+    <tr><td style="vertical-align: top;"><code>role_sales</code></td><td style="vertical-align: top;">Sales, account, or client-related title.</td></tr>
+    <tr><td style="vertical-align: top;"><code>role_consulting</code></td><td style="vertical-align: top;">Consulting-related title.</td></tr>
+    <tr><td style="vertical-align: top;"><code>role_research</code></td><td style="vertical-align: top;">Research or scientist-related title.</td></tr>
+    <tr><td style="vertical-align: top;"><code>role_devops</code></td><td style="vertical-align: top;">DevOps, SRE, or site reliability-related title.</td></tr>
+  </tbody>
+</table>
+
+We also created `title_len` and `title_word_count` to capture the length and complexity of the job title. These title-derived features are highly interpretable and align with the EDA finding that position type and job seniority are major salary drivers.
+
+<p align="center">
+  <img src="./Figures/feature_seniority_salary.png" alt="Median salary by seniority flag" width="800"><br>
+  <em>Figure 21: Median mid salary by seniority-related title flags</em>
+</p>
+
+Figure 21 shows that seniority-related title indicators are strongly associated with salary. Postings flagged as `is_senior` have the highest median midpoint salary, while `is_entry` and `is_intern` postings have much lower median salaries. Manager, lead, and architect-related titles also show relatively high median salaries.
+
+### 3.7 Preferred Technical Experience Features
+
+The `preferred_technical_experience` column contains unstructured text describing tools, technologies, and experience expectations. We transformed this field into structured predictors in three ways.
+
+First, we extracted years of experience using regular expressions:
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 28%; text-align: left;">Feature</th>
+      <th style="width: 72%; text-align: left;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="vertical-align: top;"><code>exp_years_min</code></td><td style="vertical-align: top;">Minimum number of years mentioned.</td></tr>
+    <tr><td style="vertical-align: top;"><code>exp_years_max</code></td><td style="vertical-align: top;">Maximum number of years mentioned.</td></tr>
+    <tr><td style="vertical-align: top;"><code>exp_years_any</code></td><td style="vertical-align: top;">Indicator for whether any years of experience were mentioned.</td></tr>
+  </tbody>
+</table>
+
+Second, we created skill indicator variables for common technical skills and tools:
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 100%; text-align: left;">Skill Feature Examples</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>skill_python</code>, <code>skill_java</code>, <code>skill_sql</code>, <code>skill_aws</code>, <code>skill_azure</code>, <code>skill_gcp</code></td></tr>
+    <tr><td><code>skill_kubernetes</code>, <code>skill_docker</code>, <code>skill_linux</code>, <code>skill_spark</code>, <code>skill_tableau</code>, <code>skill_powerbi</code></td></tr>
+    <tr><td><code>skill_ml</code>, <code>skill_genai</code>, <code>skill_security</code>, <code>skill_devops</code>, <code>skill_sap</code></td></tr>
+  </tbody>
+</table>
+
+Third, we created text complexity features:
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 28%; text-align: left;">Feature</th>
+      <th style="width: 72%; text-align: left;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="vertical-align: top;"><code>n_skills_mentioned</code></td><td style="vertical-align: top;">Number of matched skill indicators.</td></tr>
+    <tr><td style="vertical-align: top;"><code>exp_text_len</code></td><td style="vertical-align: top;">Character length of preferred technical experience text.</td></tr>
+    <tr><td style="vertical-align: top;"><code>exp_text_word_count</code></td><td style="vertical-align: top;">Word count of preferred technical experience text.</td></tr>
+  </tbody>
+</table>
+
+These features allow technical requirements to enter the model in an interpretable way rather than relying only on raw text.
+
+### 3.8 Text Features and TF-IDF
+
+In addition to manually engineered skill flags, the modeling pipeline also used TF-IDF features from the preferred technical experience text. TF-IDF helps represent unstructured text numerically by assigning higher weights to terms that are important in a posting but not common across all postings.
+
+To control dimensionality and computational cost, the final modeling pipeline used a reduced TF-IDF representation. This was especially important because the dataset has fewer than 500 postings, and an overly large text feature space could increase overfitting and slow model training.
+
+### 3.9 Final Preprocessing Pipeline
+
+After feature engineering, we separated the data into predictors and target:
+
+- Target variable: `log_mid_salary`
+- Predictor matrix: all non-leakage engineered features and relevant categorical/text features
+
+The following salary-derived columns were removed from the predictor matrix to prevent target leakage:
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 35%; text-align: left;">Removed Column</th>
+      <th style="width: 65%; text-align: left;">Reason</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>min_salary</code></td>
+      <td>Direct salary information from the original posting.</td>
+    </tr>
+    <tr>
+      <td><code>max_salary</code></td>
+      <td>Direct salary information from the original posting.</td>
+    </tr>
+    <tr>
+      <td><code>min_salary_num</code></td>
+      <td>Numeric version of minimum salary.</td>
+    </tr>
+    <tr>
+      <td><code>max_salary_num</code></td>
+      <td>Numeric version of maximum salary.</td>
+    </tr>
+    <tr>
+      <td><code>mid_salary</code></td>
+      <td>Directly derived from minimum and maximum salary.</td>
+    </tr>
+    <tr>
+      <td><code>salary_range</code></td>
+      <td>Directly derived from maximum and minimum salary.</td>
+    </tr>
+    <tr>
+      <td><code>salary_range_pct</code></td>
+      <td>Directly derived from salary range and midpoint salary.</td>
+    </tr>
+    <tr>
+      <td><code>min_to_max_ratio</code></td>
+      <td>Directly derived from minimum and maximum salary.</td>
+    </tr>
+    <tr>
+      <td><code>log_mid_salary</code></td>
+      <td>Target variable, so it cannot be included as a predictor.</td>
+    </tr>
+  </tbody>
+</table>
+
+The final preprocessing pipeline was designed to handle each feature type appropriately before model training. Since the dataset contained numeric, categorical, binary, and text-based variables, we applied different preprocessing steps to each group.
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 28%; text-align: left;">Feature Type</th>
+      <th style="width: 72%; text-align: left;">Preprocessing Strategy</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;">Numeric features</td>
+      <td style="vertical-align: top;">Missing values were filled using the median, and features were standardized to have comparable scales.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Categorical features</td>
+      <td style="vertical-align: top;">Missing values were filled using the most frequent category, then variables were converted into dummy variables through one-hot encoding.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Text features</td>
+      <td style="vertical-align: top;">Preferred technical experience text was transformed into numeric features using TF-IDF vectorization.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Boolean/binary features</td>
+      <td style="vertical-align: top;">Binary indicator variables were kept as 0/1 numeric features and passed directly into the model.</td>
+    </tr>
+  </tbody>
+</table>
+
+This preprocessing design ensured that all feature types could be used together in the supervised models. It also helped prevent modeling problems caused by missing values, inconsistent scales, high-cardinality categorical variables, and unstructured text. Salary-derived variables were removed before training to avoid direct target leakage.
+
+## 4. Unsupervised Learning
+
+After feature engineering and preprocessing, we applied unsupervised learning to explore hidden structure in the IBM job posting data. The goal was not to predict salary directly, but to understand how postings naturally group together based on engineered features such as role type, education, seniority, location, and skills.
+
+To avoid salary leakage, all salary-derived variables were removed before unsupervised modeling, including `min_salary`, `max_salary`, `mid_salary`, `salary_range`, and `log_mid_salary`. Salary was only used afterward to interpret the resulting clusters and outliers. The final unsupervised feature matrix contained 469 job postings and 420 processed features.
+
+### 4.1 Correlation Analysis
+
+We first examined correlations between engineered numeric features and `log_mid_salary`. The strongest positive correlations were associated with experience requirements, education level, and seniority indicators. In contrast, internship and entry-level indicators were negatively correlated with salary.
+
+**Table 3: Top engineered feature correlations with `log_mid_salary`**
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 55%; text-align: left;">Feature</th>
+      <th style="width: 45%; text-align: right;">Correlation with <code>log_mid_salary</code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>exp_years_max</code></td><td style="text-align: right;">0.440</td></tr>
+    <tr><td><code>exp_years_min</code></td><td style="text-align: right;">0.380</td></tr>
+    <tr><td><code>required_edu_level</code></td><td style="text-align: right;">0.373</td></tr>
+    <tr><td><code>is_senior</code></td><td style="text-align: right;">0.362</td></tr>
+    <tr><td><code>is_intern</code></td><td style="text-align: right;">-0.357</td></tr>
+    <tr><td><code>edu_gap_preferred_minus_required</code></td><td style="text-align: right;">-0.259</td></tr>
+    <tr><td><code>skill_sql</code></td><td style="text-align: right;">-0.244</td></tr>
+    <tr><td><code>title_word_count</code></td><td style="text-align: right;">-0.231</td></tr>
+    <tr><td><code>title_len</code></td><td style="text-align: right;">-0.222</td></tr>
+    <tr><td><code>is_lead</code></td><td style="text-align: right;">0.217</td></tr>
+    <tr><td><code>is_entry</code></td><td style="text-align: right;">-0.217</td></tr>
+    <tr><td><code>skill_tableau</code></td><td style="text-align: right;">-0.203</td></tr>
+    <tr><td><code>skill_python</code></td><td style="text-align: right;">-0.200</td></tr>
+    <tr><td><code>posted_month</code></td><td style="text-align: right;">-0.193</td></tr>
+    <tr><td><code>n_states_listed</code></td><td style="text-align: right;">0.192</td></tr>
+  </tbody>
+</table>
+
+These results support the earlier EDA finding that salary is strongly related to seniority, experience, and education. Negative correlations for some skill indicators likely reflect role composition, since many postings mentioning technical skills are internships or entry-level roles.
+
+<p align="center">
+  <img src="./Figures/correlation_structure_salary_features.png" alt="Correlation Structure of Top Salary-Related Features" width="800"><br>
+  <em>Figure 20: Correlation structure of top salary-related engineered features</em>
+</p>
+
+Figure 20 shows that experience, education level, and seniority-related features are positively associated with `log_mid_salary`, while internship and entry-level indicators tend to be negatively associated with salary. This supports the finding that salary differences are strongly connected to job seniority and experience requirements.
+
+### 4.2 PCA Visualization and Dimensionality Reduction
+
+Because the processed feature matrix was high-dimensional, we used PCA to reduce dimensionality. The first two principal components explained 10.34% and 7.59% of the variance, respectively. Together, they explained 17.93% of total variation, which suggests that job posting structure is spread across many dimensions.
+
+The cumulative explained variance showed that 26 principal components were needed to explain 80% of the variance, and 38 components were needed to explain 90%. Therefore, we used the first 38 principal components for K-Means clustering and Isolation Forest.
+
+**Table 4: PCA explained variance summary**
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 60%; text-align: left;">PCA Metric</th>
+      <th style="width: 40%; text-align: right;">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>PC1 explained variance</td><td style="text-align: right;">0.1034</td></tr>
+    <tr><td>PC2 explained variance</td><td style="text-align: right;">0.0759</td></tr>
+    <tr><td>PCs needed for 80% variance</td><td style="text-align: right;">26</td></tr>
+    <tr><td>PCs needed for 90% variance</td><td style="text-align: right;">38</td></tr>
+    <tr><td>Number of PCs used for clustering</td><td style="text-align: right;">38</td></tr>
+  </tbody>
+</table>
+
+<p align="center">
+  <img src="./Figures/pca_cumulative_explained_variance.png" alt="PCA Cumulative Explained Variance" width="800"><br>
+  <em>Figure 21: PCA cumulative explained variance</em>
+</p>
+
+Figure 21 shows that the cumulative explained variance increases gradually as more principal components are added. Since the data contains many engineered and text-based features, the feature space is high-dimensional. We retained 38 principal components because they explained approximately 90% of the total variance.
+
+### 4.3 K-Means Clustering
+
+K-Means clustering was applied to the first 38 principal components. We tested `k` from 2 to 8 and selected `k = 8`, which had the highest silhouette score among the tested values.
+
+**Table 5: K-Means silhouette scores**
+
+<table style="width: 55%; margin-left: auto; margin-right: auto; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="text-align: center; padding: 8px 18px; border-bottom: 2px solid #ddd;">k</th>
+      <th style="text-align: center; padding: 8px 18px; border-bottom: 2px solid #ddd;">Silhouette Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="text-align: center; padding: 6px 18px;">2</td><td style="text-align: center; padding: 6px 18px;">0.0824</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">3</td><td style="text-align: center; padding: 6px 18px;">0.0877</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">4</td><td style="text-align: center; padding: 6px 18px;">0.0962</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">5</td><td style="text-align: center; padding: 6px 18px;">0.0995</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">6</td><td style="text-align: center; padding: 6px 18px;">0.1026</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">7</td><td style="text-align: center; padding: 6px 18px;">0.0994</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">8</td><td style="text-align: center; padding: 6px 18px;">0.1089</td></tr>
+  </tbody>
+</table>
+
+The final clusters were uneven in size, with the largest cluster containing 188 postings and the smallest containing 6 postings.
+
+**Table 6: Final K-Means cluster sizes**
+
+<table style="width: 70%; margin-left: auto; margin-right: auto; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="text-align: center; padding: 8px 18px; border-bottom: 2px solid #ddd;">Cluster</th>
+      <th style="text-align: center; padding: 8px 18px; border-bottom: 2px solid #ddd;">Number of Jobs</th>
+      <th style="text-align: center; padding: 8px 18px; border-bottom: 2px solid #ddd;">Share of Jobs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="text-align: center; padding: 6px 18px;">0</td><td style="text-align: center; padding: 6px 18px;">73</td><td style="text-align: center; padding: 6px 18px;">15.6%</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">1</td><td style="text-align: center; padding: 6px 18px;">188</td><td style="text-align: center; padding: 6px 18px;">40.1%</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">2</td><td style="text-align: center; padding: 6px 18px;">76</td><td style="text-align: center; padding: 6px 18px;">16.2%</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">3</td><td style="text-align: center; padding: 6px 18px;">27</td><td style="text-align: center; padding: 6px 18px;">5.8%</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">4</td><td style="text-align: center; padding: 6px 18px;">53</td><td style="text-align: center; padding: 6px 18px;">11.3%</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">5</td><td style="text-align: center; padding: 6px 18px;">25</td><td style="text-align: center; padding: 6px 18px;">5.3%</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">6</td><td style="text-align: center; padding: 6px 18px;">6</td><td style="text-align: center; padding: 6px 18px;">1.3%</td></tr>
+    <tr><td style="text-align: center; padding: 6px 18px;">7</td><td style="text-align: center; padding: 6px 18px;">21</td><td style="text-align: center; padding: 6px 18px;">4.5%</td></tr>
+  </tbody>
+</table>
+
+### 4.4 Cluster Interpretation
+
+After clustering, we interpreted each group using salary, position type, area of work, education, experience, and skill indicators. Salary was not used to create the clusters, so salary differences across clusters can be viewed as external validation.
+
+**Table 7: Salary summary by K-Means cluster**
+
+<table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 9%; text-align: center; padding: 8px 12px; border-bottom: 2px solid #ddd;">Cluster</th>
+      <th style="width: 13%; text-align: center; padding: 8px 12px; border-bottom: 2px solid #ddd;">Number of Jobs</th>
+      <th style="width: 15%; text-align: center; padding: 8px 12px; border-bottom: 2px solid #ddd;">Median Salary</th>
+      <th style="width: 15%; text-align: center; padding: 8px 12px; border-bottom: 2px solid #ddd;">Mean Salary</th>
+      <th style="width: 27%; text-align: left; padding: 8px 12px; border-bottom: 2px solid #ddd;">Most Common Area</th>
+      <th style="width: 21%; text-align: left; padding: 8px 12px; border-bottom: 2px solid #ddd;">Most Common Position Type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center; padding: 6px 12px;">0</td>
+      <td style="text-align: center; padding: 6px 12px;">73</td>
+      <td style="text-align: center; padding: 6px 12px;">$158,000</td>
+      <td style="text-align: center; padding: 6px 12px;">$153,325</td>
+      <td style="text-align: left; padding: 6px 12px;">Consulting</td>
+      <td style="text-align: left; padding: 6px 12px;">Professional</td>
+    </tr>
+    <tr>
+      <td style="text-align: center; padding: 6px 12px;">1</td>
+      <td style="text-align: center; padding: 6px 12px;">188</td>
+      <td style="text-align: center; padding: 6px 12px;">$150,950</td>
+      <td style="text-align: center; padding: 6px 12px;">$146,904</td>
+      <td style="text-align: left; padding: 6px 12px;">Infrastructure &amp; Technology</td>
+      <td style="text-align: left; padding: 6px 12px;">Professional</td>
+    </tr>
+    <tr>
+      <td style="text-align: center; padding: 6px 12px;">2</td>
+      <td style="text-align: center; padding: 6px 12px;">76</td>
+      <td style="text-align: center; padding: 6px 12px;">$114,781</td>
+      <td style="text-align: center; padding: 6px 12px;">$118,585</td>
+      <td style="text-align: left; padding: 6px 12px;">Infrastructure &amp; Technology</td>
+      <td style="text-align: left; padding: 6px 12px;">Internship</td>
+    </tr>
+    <tr>
+      <td style="text-align: center; padding: 6px 12px;">3</td>
+      <td style="text-align: center; padding: 6px 12px;">27</td>
+      <td style="text-align: center; padding: 6px 12px;">$120,960</td>
+      <td style="text-align: center; padding: 6px 12px;">$134,530</td>
+      <td style="text-align: left; padding: 6px 12px;">Software Engineering</td>
+      <td style="text-align: left; padding: 6px 12px;">Internship</td>
+    </tr>
+    <tr>
+      <td style="text-align: center; padding: 6px 12px;">4</td>
+      <td style="text-align: center; padding: 6px 12px;">53</td>
+      <td style="text-align: center; padding: 6px 12px;">$158,000</td>
+      <td style="text-align: center; padding: 6px 12px;">$169,686</td>
+      <td style="text-align: left; padding: 6px 12px;">Consulting</td>
+      <td style="text-align: left; padding: 6px 12px;">Professional</td>
+    </tr>
+    <tr>
+      <td style="text-align: center; padding: 6px 12px;">5</td>
+      <td style="text-align: center; padding: 6px 12px;">25</td>
+      <td style="text-align: center; padding: 6px 12px;">$99,450</td>
+      <td style="text-align: center; padding: 6px 12px;">$102,590</td>
+      <td style="text-align: left; padding: 6px 12px;">Infrastructure &amp; Technology</td>
+      <td style="text-align: left; padding: 6px 12px;">Entry Level</td>
+    </tr>
+    <tr>
+      <td style="text-align: center; padding: 6px 12px;">6</td>
+      <td style="text-align: center; padding: 6px 12px;">6</td>
+      <td style="text-align: center; padding: 6px 12px;">$64,355</td>
+      <td style="text-align: center; padding: 6px 12px;">$68,633</td>
+      <td style="text-align: left; padding: 6px 12px;">Software Engineering</td>
+      <td style="text-align: left; padding: 6px 12px;">Entry Level</td>
+    </tr>
+    <tr>
+      <td style="text-align: center; padding: 6px 12px;">7</td>
+      <td style="text-align: center; padding: 6px 12px;">21</td>
+      <td style="text-align: center; padding: 6px 12px;">$134,000</td>
+      <td style="text-align: center; padding: 6px 12px;">$137,741</td>
+      <td style="text-align: left; padding: 6px 12px;">Software Engineering</td>
+      <td style="text-align: left; padding: 6px 12px;">Professional</td>
+    </tr>
+  </tbody>
+</table>
+
+The clusters mainly separate postings by seniority, position type, and role family. Professional and consulting-heavy clusters have higher median salaries, while internship and entry-level clusters have lower salaries. This indicates that the engineered features captured meaningful structure in the postings.
+
+<p align="center">
+  <img src="./Figures/salary_distribution_by_kmeans_cluster.png" alt="Salary Distribution by K-Means Cluster" width="800"><br>
+  <em>Figure 22: Salary distribution by K-Means cluster</em>
+</p>
+
+Figure 22 compares salary distributions across the K-Means clusters. Clusters 0, 1, and 4 generally show higher salary levels, while clusters 5 and 6 have lower salary levels. Since salary variables were excluded from the clustering inputs, these differences suggest that the engineered features captured meaningful job structure related to seniority, role type, and area of work.
+
+### 4.5 Skill Patterns by Cluster
+
+Skill indicators also varied across clusters. Some clusters had higher proportions of cloud-related skills such as AWS, Azure, and GCP, while others showed stronger software development signals such as Python and Java. This suggests that text-derived features helped distinguish different technical job groups.
+
+However, skill effects should be interpreted carefully because they are confounded with seniority and role type. For example, some skills appear more often in lower-paid entry-level or internship postings.
+
+### 4.6 Isolation Forest Outlier Detection
+
+We also applied Isolation Forest to the PCA-reduced feature matrix to detect unusual postings. Salary variables were again excluded from the input features. Using a contamination rate of 0.05, the model flagged 24 postings as outliers.
+
+**Table 8: Isolation Forest outlier counts**
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 60%; text-align: left;">Outlier Status</th>
+      <th style="width: 40%; text-align: right;">Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Normal</td><td style="text-align: right;">445</td></tr>
+    <tr><td>Outlier</td><td style="text-align: right;">24</td></tr>
+  </tbody>
+</table>
+
+Manual inspection showed that most outliers were not data errors. Instead, they were specialized postings with unusual combinations of job type, skills, education, and seniority. Therefore, we retained these observations for downstream modeling.
+
+### 4.7 Summary of Unsupervised Findings
+
+The unsupervised analysis showed that the engineered features captured meaningful structure in the job postings. Correlation analysis highlighted seniority, experience, and education as important salary-related features. PCA confirmed that the dataset was high-dimensional, so dimensionality reduction was useful before clustering. K-Means identified interpretable job groups, and Isolation Forest detected a small number of unusual but valid postings.
+
+Overall, these results support the later supervised modeling stage by showing that role seniority, job family, education requirements, and technical skill patterns are important dimensions of variation in the IBM job posting data.
+
+## 5. Model Development
+
+With our categorical, numerical, and TF-IDF features constructed in the Feature Engineering section, we developed supervised models to predict the log midpoint salary. The predictor matrix `X` and target variable `y` were defined before modeling, and we used a 75/25 train-test split to evaluate three models: Random Forest, Gradient Boosting, and Ridge Regression.
+
+### 5.1 Three Models We Chose
+
+- We chose **Random Forest** because it improves on standard bagging by selecting only a subset of features at each split. This increases tree diversity and helps reduce overfitting, which is useful for our dataset with many engineered and TF-IDF features.
+- We chose **Gradient Boosting** because it builds trees sequentially, with each new tree correcting the residual errors of the previous model. This allows it to capture patterns that a simple averaging method may miss.
+- We chose **Ridge Regression** as a linear baseline. Ridge regression is easier to interpret than tree-based models and helps us compare whether nonlinear methods provide meaningful gains over a regularized linear model.
+
+### 5.2 Parameters for Hyperparameter Tuning
+
+*Note: the first value listed for each variable was used for the baseline model.*
 
 **Random Forest:**
 
-| Variable | Why tune this hyperparameter | Options |
-|-|-|-|
-| Number of Estimators \* | More trees reduce prediction variance and stabilize the error rate, but an overly large number of trees would lead to high computation cost for little improvement. | 200, 500 |
-| Portion of All Features | Controls diversity among individual trees by limiting how many features each split considers. Lower values would lower the correlation between trees and therefore improving robustness against overfitting. | 0.33, sqrt, 0.2, 0.5 |
-| Minimum Samples per Leaf | Acts as regularization by requiring a minimum amount of data at each leaf. A higher value would lead to more general leaf nodes that could prevent overfitting. | 1, 2, 5 |
-| Maximum Depth | Deeper trees capture more detailed patterns, but an overly deep tree would lead to overfitting and less generalization. | None, 20, 40 |
+<table style="width: 90%; margin-left: auto; margin-right: auto; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="width: 24%; text-align: left; padding: 10px 14px; border-bottom: 2px solid #ddd;">Variable</th>
+      <th style="width: 52%; text-align: left; padding: 10px 14px; border-bottom: 2px solid #ddd;">Why Tune This Hyperparameter</th>
+      <th style="width: 24%; text-align: left; padding: 10px 14px; border-bottom: 2px solid #ddd;">Options</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding: 8px 14px; vertical-align: top;">Number of Estimators *</td>
+      <td style="padding: 8px 14px; vertical-align: top;">More trees can reduce prediction variance, but too many trees increase computation time with limited additional improvement.</td>
+      <td style="padding: 8px 14px; vertical-align: top;">200, 500</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 14px; vertical-align: top;">Portion of All Features</td>
+      <td style="padding: 8px 14px; vertical-align: top;">Controls how many features each split considers. Smaller values can reduce correlation between trees and improve robustness.</td>
+      <td style="padding: 8px 14px; vertical-align: top;">0.33, sqrt, 0.2, 0.5</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 14px; vertical-align: top;">Minimum Samples per Leaf</td>
+      <td style="padding: 8px 14px; vertical-align: top;">Acts as regularization by requiring a minimum number of observations in each leaf node.</td>
+      <td style="padding: 8px 14px; vertical-align: top;">1, 2, 5</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 14px; vertical-align: top;">Maximum Depth</td>
+      <td style="padding: 8px 14px; vertical-align: top;">Controls tree complexity. Deeper trees capture more detail but may overfit.</td>
+      <td style="padding: 8px 14px; vertical-align: top;">None, 20, 40</td>
+    </tr>
+  </tbody>
+</table>
 
-\* Due to computation limits, we could not perform the common practice of starting with 10x number of features.
+\* Due to computation limits, we could not perform the common practice of starting with 10 times the number of features.
 
 **Best parameters after tuning:**
 
-| Feature | Value |
-|-|-|
-| Number of Estimators | 500 |
-| Portion of All Features | 0.33 |
-| Minimum Samples per Leaf | 1 |
-| Maximum Depth | 40 |
-
----
-
-**Gradient Boost:**
-
-*Note: the first value listed for each variable was used for baseline.*
-
-| Variable | Why tune this hyperparameter | Options |
-|-|-|-|
-| Number of Estimators \* | More trees reduce prediction variance and stabilize the error rate, but an overly large number of trees would lead to high computation cost for little improvement. | 300, 100, 200 |
-| Learning Rate | Determines how much a tree would contribute to final result. A smaller value would lead to stronger results but also requires more estimators. | 0.05, 0.03, 0.08 |
-| Maximum Depth | Deeper trees capture more detailed patterns, but an overly deep tree would lead to overfitting and less generalization. | 3, 2, 4 |
-| Minimum Samples per Leaf | Acts as regularization by requiring a minimum amount of data at each leaf. A higher value would lead to more general leaf nodes that could prevent overfitting. | 1, 3, 5 |
-| Subsample | Using a random fraction of samples per tree would speed up the training process and reduce overfitting. | 1.0, 0.8 |
-
-\* Number of Estimators had been reduced due to high computation demand as shown in Random Forest.
-
-**Best parameters after tuning:**
-
-| Feature | Value |
-|-|-|
-| Number of Estimators | 300 |
-| Learning Rate | 0.05 |
-| Maximum Depth | 4 |
-| Minimum Samples per Leaf | 1 |
-| Subsample | 0.8 |
-
----
-
-**Ridge Regression:**
-
-The only thing to tune was alpha because ridge regression has a single regularization hyperparameter. Unlike tree-based models, we let alpha alone to control the regularization strength, where a larger value would lead to more significant shrinking in coefficients. The list of options we tested on was
-
-$$
-[1, 0.01, 0.1, 0.3, 0.5, 0.8, 1.5, 2, 3, 5, 10, 50, 100]
-$$
-
-1 was used for our baseline, and the best alpha based on our testing was 0.8.
-
-### 4.3 Performance evaluation method
-
-Our testing metrics included RMSE, MAE, and $R^2$ because they each capture a different aspect of prediction quality.
-* RMSE (Root Mean Squared Error) penalizes large errors disproportionately, so it is sensitive to cases where the model badly mispredicts a salary.
-* MAE (Mean Absolute Error) reports the average magnitude of errors and is more robust to outliers.
-* $R^2$ measures the proportion of variance: a value closer to 1 indicates the model captures more of the true variation across job postings.
-
-How we picked out the best performing parameter combination:
-* We first performed cross-validation tests among the training dataset for each combination.
-* For random forest and gradient boost, we first tested our baseline and then testing multiple combinations to examine on whether they are sensitive to hyperparameter tuning.
-* After finding out the best hyperparameters among available options, we tested them against the testing dataset.
-* We also compare the baseline RMSE, tuned CV RMSE, and tuned test RMSE to check whether we experience overfitting from the training dataset.
-
-The following were our results:
-
-**Random Forest:**
-
-| Criteria | Value |
-|-|-|
-| Baseline RMSE (log) | 0.1934 |
-| Baseline MAE (log) | 0.1464 |
-| Baseline $R^2$ | 0.7196 |
-| Tuned CV RMSE (log) | 0.1922 |
-| Tuned Test RMSE (log) | 0.1466 |
-| Tuned Test MAE (log) | 0.1098 |
-| Tuned Test $R^2$ | 0.8568 |
-
-The RMSE hardly changed for training dataset after hyperparameter tuning but decreased sharply for testing dataset. The significant decrease of MAE and increase in $R^2$ shows us that hyperparameter tuning does bring improvement for random forest.
+<table style="width: 55%; margin-left: auto; margin-right: auto; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="width: 65%; text-align: left; padding: 8px 14px; border-bottom: 2px solid #ddd;">Feature</th>
+      <th style="width: 35%; text-align: left; padding: 8px 14px; border-bottom: 2px solid #ddd;">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding: 6px 14px;">Number of Estimators</td><td style="padding: 6px 14px;">500</td></tr>
+    <tr><td style="padding: 6px 14px;">Portion of All Features</td><td style="padding: 6px 14px;">0.33</td></tr>
+    <tr><td style="padding: 6px 14px;">Minimum Samples per Leaf</td><td style="padding: 6px 14px;">1</td></tr>
+    <tr><td style="padding: 6px 14px;">Maximum Depth</td><td style="padding: 6px 14px;">40</td></tr>
+  </tbody>
+</table>
 
 ---
 
 **Gradient Boosting:**
 
-| Criteria | Value |
-|-|-|
-| Baseline RMSE (log) | 0.1812 |
-| Baseline MAE (log) | 0.1392 |
-| Baseline $R^2$ | 0.7545 |
-| Tuned CV RMSE (log) | 0.1816 |
-| Tuned Test RMSE (log) | 0.1496 |
-| Tuned Test MAE (log) | 0.1077 |
-| Tuned Test $R^2$ | 0.8508 |
+*Note: the first value listed for each variable was used for the baseline model.*
 
-Gradient boosting delivered similar results to random forest, with a slightly better baseline performance, meaning that the improvement was actually smaller. In other words, it has been less sensitive to hyperparameter tuning and we may expect less improvements in another case.
+<table style="width: 90%; margin-left: auto; margin-right: auto; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="width: 24%; text-align: left; padding: 10px 14px; border-bottom: 2px solid #ddd;">Variable</th>
+      <th style="width: 52%; text-align: left; padding: 10px 14px; border-bottom: 2px solid #ddd;">Why Tune This Hyperparameter</th>
+      <th style="width: 24%; text-align: left; padding: 10px 14px; border-bottom: 2px solid #ddd;">Options</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding: 8px 14px; vertical-align: top;">Number of Estimators *</td>
+      <td style="padding: 8px 14px; vertical-align: top;">More boosting stages can improve performance, but too many stages increase computation cost and may overfit.</td>
+      <td style="padding: 8px 14px; vertical-align: top;">300, 100, 200</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 14px; vertical-align: top;">Learning Rate</td>
+      <td style="padding: 8px 14px; vertical-align: top;">Controls how much each tree contributes to the final model. Smaller values can improve performance but require more trees.</td>
+      <td style="padding: 8px 14px; vertical-align: top;">0.05, 0.03, 0.08</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 14px; vertical-align: top;">Maximum Depth</td>
+      <td style="padding: 8px 14px; vertical-align: top;">Controls the complexity of each individual tree. Deeper trees capture more interactions but can overfit.</td>
+      <td style="padding: 8px 14px; vertical-align: top;">3, 2, 4</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 14px; vertical-align: top;">Minimum Samples per Leaf</td>
+      <td style="padding: 8px 14px; vertical-align: top;">Regularizes the model by requiring a minimum number of observations in each leaf node.</td>
+      <td style="padding: 8px 14px; vertical-align: top;">1, 3, 5</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 14px; vertical-align: top;">Subsample</td>
+      <td style="padding: 8px 14px; vertical-align: top;">Uses a random fraction of observations for each tree, which can reduce overfitting and improve training efficiency.</td>
+      <td style="padding: 8px 14px; vertical-align: top;">1.0, 0.8</td>
+    </tr>
+  </tbody>
+</table>
+
+\* Number of estimators was reduced because of the high computational demand of tree-based models.
+
+**Best parameters after tuning:**
+
+<table style="width: 55%; margin-left: auto; margin-right: auto; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="width: 65%; text-align: left; padding: 8px 14px; border-bottom: 2px solid #ddd;">Feature</th>
+      <th style="width: 35%; text-align: left; padding: 8px 14px; border-bottom: 2px solid #ddd;">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding: 6px 14px;">Number of Estimators</td><td style="padding: 6px 14px;">300</td></tr>
+    <tr><td style="padding: 6px 14px;">Learning Rate</td><td style="padding: 6px 14px;">0.05</td></tr>
+    <tr><td style="padding: 6px 14px;">Maximum Depth</td><td style="padding: 6px 14px;">4</td></tr>
+    <tr><td style="padding: 6px 14px;">Minimum Samples per Leaf</td><td style="padding: 6px 14px;">1</td></tr>
+    <tr><td style="padding: 6px 14px;">Subsample</td><td style="padding: 6px 14px;">0.8</td></tr>
+  </tbody>
+</table>
 
 ---
 
 **Ridge Regression:**
 
-| Criteria | Value |
-|-|-|
-| Baseline RMSE (log) | 0.1916 |
-| Baseline MAE (log) | 0.1454 |
-| Baseline $R^2$ | 0.7249 |
-| Tuned CV RMSE (log) | 0.1865 |
-| Tuned Test RMSE (log) | 0.1753 |
-| Tuned Test MAE (log) | 0.1286 |
-| Tuned Test $R^2$ | 0.7953 |
+The only tuned hyperparameter for Ridge Regression was `alpha`, which controls the strength of L2 regularization. A larger value shrinks coefficients more strongly and can reduce overfitting.
 
-Ridge regression showed worse improvement compared to the two tree methods, likely because it is a linear model that cannot capture non-linear relationships between features and log salary. It performed particularly bad among the hundreds of TF-IDF features, which require non-linear decision boundaries to contribute meaningfully to salary prediction.
+The tested values were:
 
-## 5. Model Comparison & Selection
+$$
+[1, 0.01, 0.1, 0.3, 0.5, 0.8, 1.5, 2, 3, 5, 10, 50, 100]
+$$
 
-### 5.1 Model performance comparison by error
+The baseline value was 1, and the best value selected from testing was 0.8.
 
-The following is the comparison of tuned test RMSE in dollar value for each method:
+### 5.3 Performance Evaluation Method
 
-| Random Forest | Gradient Boosting | Ridge Regression |
-|-|-|-|
-| 21,727 | 22,270 | 25,541 |
+We evaluated the models using RMSE, MAE, and $R^2$.
 
-And the following is the comparison of tuned test MAE in dollar value for each method:
+- **RMSE** penalizes large errors more strongly, so it is useful for identifying whether a model makes large salary prediction mistakes.
+- **MAE** measures the average absolute error and is more robust to outliers.
+- **$R^2$** measures the proportion of variance explained by the model.
 
-| Random Forest | Gradient Boosting | Ridge Regression |
-|-|-|-|
-| 15,310 | 14,929 | 17,818 |
+For each model, we first evaluated a baseline configuration, then used cross-validation on the training set to compare tuning options. After selecting the best hyperparameters, we evaluated the tuned model on the held-out test set. We also compared baseline RMSE, tuned CV RMSE, and tuned test RMSE to check for overfitting.
 
-Despite the closeness of random forest and gradient boosting, a difference of $1,000 can still be significant in this context. Due to computational limits, we only tested 20 combinations of each tree method's hyperparameter settings. Based on the results, we believe random forest has more potential if parameters could be further improved, given how much it already improved over the baseline and its strong performance on the test dataset.
+The following were our results:
 
-Moreover, the poor performance of ridge regression showed us how penalty and improvement from past training would do little to training, another reason to choose an aggregation of diversified decision tree like random forest.
+**Random Forest:**
 
-### 5.2 Model performance comparison by plot
+<table>
+  <thead>
+    <tr>
+      <th style="width: 60%; text-align: left;">Criteria</th>
+      <th style="width: 40%; text-align: right;">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Baseline RMSE (log)</td><td style="text-align: right;">0.1934</td></tr>
+    <tr><td>Baseline MAE (log)</td><td style="text-align: right;">0.1464</td></tr>
+    <tr><td>Baseline R<sup>2</sup></td><td style="text-align: right;">0.7196</td></tr>
+    <tr><td>Tuned CV RMSE (log)</td><td style="text-align: right;">0.1922</td></tr>
+    <tr><td>Tuned Test RMSE (log)</td><td style="text-align: right;">0.1466</td></tr>
+    <tr><td>Tuned Test MAE (log)</td><td style="text-align: right;">0.1098</td></tr>
+    <tr><td>Tuned Test R<sup>2</sup></td><td style="text-align: right;">0.8568</td></tr>
+  </tbody>
+</table>
+
+Hyperparameter tuning improved Random Forest substantially on the test set, especially in RMSE, MAE, and $R^2$. This suggests that the tuned Random Forest model generalized better than the baseline.
+
+---
+
+**Gradient Boosting:**
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 60%; text-align: left;">Criteria</th>
+      <th style="width: 40%; text-align: right;">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Baseline RMSE (log)</td><td style="text-align: right;">0.1812</td></tr>
+    <tr><td>Baseline MAE (log)</td><td style="text-align: right;">0.1392</td></tr>
+    <tr><td>Baseline R<sup>2</sup></td><td style="text-align: right;">0.7545</td></tr>
+    <tr><td>Tuned CV RMSE (log)</td><td style="text-align: right;">0.1816</td></tr>
+    <tr><td>Tuned Test RMSE (log)</td><td style="text-align: right;">0.1496</td></tr>
+    <tr><td>Tuned Test MAE (log)</td><td style="text-align: right;">0.1077</td></tr>
+    <tr><td>Tuned Test R<sup>2</sup></td><td style="text-align: right;">0.8508</td></tr>
+  </tbody>
+</table>
+
+Gradient Boosting performed similarly to Random Forest and achieved the lowest test MAE. However, its tuned test RMSE was slightly higher than Random Forest, and the improvement from tuning was smaller.
+
+---
+
+**Ridge Regression:**
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 60%; text-align: left;">Criteria</th>
+      <th style="width: 40%; text-align: right;">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Baseline RMSE (log)</td><td style="text-align: right;">0.1916</td></tr>
+    <tr><td>Baseline MAE (log)</td><td style="text-align: right;">0.1454</td></tr>
+    <tr><td>Baseline R<sup>2</sup></td><td style="text-align: right;">0.7249</td></tr>
+    <tr><td>Tuned CV RMSE (log)</td><td style="text-align: right;">0.1865</td></tr>
+    <tr><td>Tuned Test RMSE (log)</td><td style="text-align: right;">0.1753</td></tr>
+    <tr><td>Tuned Test MAE (log)</td><td style="text-align: right;">0.1286</td></tr>
+    <tr><td>Tuned Test R<sup>2</sup></td><td style="text-align: right;">0.7953</td></tr>
+  </tbody>
+</table>
+
+Ridge Regression improved after tuning but performed worse than the two tree-based models. This likely reflects its linear structure, which cannot capture nonlinear relationships and feature interactions as effectively as Random Forest or Gradient Boosting.
+
+## 6. Model Comparison & Selection
+
+### 6.1 Model Performance Comparison by Error
+
+The table below compares the tuned test errors in dollar value for the three supervised models.
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 34%; text-align: left;">Metric</th>
+      <th style="width: 22%; text-align: right;">Random Forest</th>
+      <th style="width: 22%; text-align: right;">Gradient Boosting</th>
+      <th style="width: 22%; text-align: right;">Ridge Regression</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><strong>Tuned Test RMSE (USD)</strong></td>
+      <td style="text-align: right; vertical-align: top;">$21,727</td>
+      <td style="text-align: right; vertical-align: top;">$22,270</td>
+      <td style="text-align: right; vertical-align: top;">$25,541</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><strong>Tuned Test MAE (USD)</strong></td>
+      <td style="text-align: right; vertical-align: top;">$15,310</td>
+      <td style="text-align: right; vertical-align: top;">$14,929</td>
+      <td style="text-align: right; vertical-align: top;">$17,818</td>
+    </tr>
+  </tbody>
+</table>
+
+Random Forest achieved the lowest tuned test RMSE, while Gradient Boosting achieved the lowest tuned test MAE. Since RMSE penalizes large errors more heavily, Random Forest is preferred because it better reduces large salary prediction mistakes. Ridge Regression had the highest RMSE and MAE, suggesting that a linear model was less effective for this dataset.
+
+Although Random Forest and Gradient Boosting performed closely, a difference of about $1,000 can still be meaningful in salary prediction. Due to computational limits, we only tested a limited number of hyperparameter combinations for the tree-based models. Based on the final results, Random Forest was selected as the final model because it provided the best balance of predictive accuracy, robustness, and interpretability through feature importance.
+
+### 6.2 Model performance comparison by plot
 
 **Actual vs. Predicted**
 
-| | | |
-|-|-|-|
-| ![](./Figures/model_images/random_forest_avp.png)  | ![](./Figures/model_images/gradient_boosting_avp.png) | ![](./Figures/model_images/ridge_regression_avp.png) |
+| Random Forest | Gradient Boosting | Ridge Regression |
+|---|---|---|
+| ![](./Figures/model_images/random_forest_avp.png) | ![](./Figures/model_images/gradient_boosting_avp.png) | ![](./Figures/model_images/ridge_regression_avp.png) |
 
 **Residual Plot**
 
-| | | |
-|-|-|-|
+| Random Forest | Gradient Boosting | Ridge Regression |
+|---|---|---|
 | ![](./Figures/model_images/random_forest_residual.png) | ![](./Figures/model_images/gradient_boosting_residual.png) | ![](./Figures/model_images/ridge_regression_residual.png) |
 
 Visually, all three reflected similar performances across the testing dataset, with ridge regression having relatively larger errors than the other two methods. Random forest appear to have more clustering on the plot compared to the other two with broad distribution, which shows that random forest tends to have less variance compared to the other two.
 
 **Top 20 Features (Tree Only)**
 
-| | |
-|-|-|
+| Random Forest | Gradient Boosting |
+|---|---|
 | ![](./Figures/model_images/random_forest_top20.png) | ![](./Figures/model_images/gradient_boosting_top20.png) |
 
 While both models' result proved our hypothesis that critical factors including job level and education level would affect the salary, random forest shows a much better distribution across these features. The feature importances are calculated using Mean Decrease Impurity (MDI): the higher the value, the purer the descendent data after this decision node. Random forest's random feature selection feature provides a more balanced distribution across features, making the top feature "Professional" having only 0.2939 MDI. On the other hand, continuous learning for gradient boosting led to high importance of "Professional" with 0.4867 MDI. As a result, random forest makes features much balanced especially when we have hundreds of features.
 
-## 6. Conclusion & Discussion
+## 7. Interactive Shiny Dashboard
 
-This project developed a full end-to-end data science pipeline to predict job salaries using IBM job posting data. Across the workflow, we combined data cleaning, exploratory data analysis, feature engineering, unsupervised learning, and supervised modeling to build and evaluate predictive models.
+In addition to the notebook-based analysis, we developed an interactive Shiny dashboard to make the project results easier to explore and present. The dashboard was built using `R Shiny` and uses the final processed dataset `ibm_jobs_final_processed.csv`.
+
+The dashboard allows users to filter IBM job postings by area of work, position type, and primary region. Based on these filters, users can interactively view dataset summaries, exploratory data analysis plots, feature engineering summaries, unsupervised learning results, and final supervised model comparison outputs.
+
+The dashboard contains the following main sections:
+
+* **Overview:** displays the number of job postings, salary summary statistics, cluster counts, outlier counts, and a preview of the processed dataset.
+* **EDA:** presents data quality summaries, categorical variable distributions, salary distributions, salary range analysis, and correlations with log salary.
+* **Salary Exploration:** compares salary patterns across area of work, position type, region, and education requirements.
+* **Feature Engineering:** summarizes engineered variables, including education levels, experience features, seniority indicators, role indicators, and skill-related features.
+* **Unsupervised Learning:** visualizes PCA, K-Means clustering, cluster-level salary patterns, and outlier detection results.
+* **Modeling:** presents the final supervised model comparison, including Random Forest, Gradient Boosting, and Ridge Regression results.
+
+The deployed dashboard is available at:
+
+[IBM Job Salary Analysis Dashboard](https://baixuanchen5243.shinyapps.io/5243-project4/)
+
+Direct link: https://baixuanchen5243.shinyapps.io/5243-project4/
+
+This dashboard complements the written report by allowing users to interactively explore how salary patterns and model results change across different job categories. It also provides a more accessible way to communicate the main findings from the feature engineering, unsupervised learning, and supervised modeling stages.
+
+## 8. Conclusion & Discussion
+
+This project developed a full end-to-end data science pipeline to predict job salaries using IBM job posting data. Across the workflow, we combined data cleaning, exploratory data analysis, feature engineering, unsupervised learning, supervised modeling, and an interactive Shiny dashboard to build, evaluate, and communicate the results.
 
 From the modeling results, tree-based methods significantly outperformed the linear baseline. Ridge regression, while interpretable, was limited by its inability to capture nonlinear relationships among features, especially in the presence of high-dimensional TF-IDF variables. In contrast, both Random Forest and Gradient Boosting demonstrated strong predictive performance, confirming that salary is driven by complex interactions between job characteristics.
 
-Although Gradient Boosting achieved the best overall predictive accuracy, Random Forest was selected as the final model. This decision reflects a trade-off between performance, interpretability, and robustness. The performance gain from Gradient Boosting was relatively small, while Random Forest provides more stable predictions, is less sensitive to hyperparameter tuning, and offers clearer feature importance interpretation. These properties make it more suitable for real-world applications.
+Although Gradient Boosting achieved strong predictive accuracy, Random Forest was selected as the final model. This decision reflects a trade-off between performance, interpretability, and robustness. The performance difference between Random Forest and Gradient Boosting was relatively small, while Random Forest provided more stable predictions, was less sensitive to hyperparameter tuning, and offered clearer feature importance interpretation. These properties make it more suitable for practical use.
 
-Beyond predictive performance, the analysis also provided meaningful insights into salary drivers. Position type emerged as the most influential factor, followed by area of work and education level. Additionally, the strong positive relationship between salary level and salary range suggests that higher-level roles offer greater compensation flexibility. These findings align with expectations of labor market structure within large technology firms.
+Beyond predictive performance, the analysis also provided meaningful insights into salary drivers. Position type emerged as one of the most influential factors, followed by area of work, education level, seniority, and experience requirements. The unsupervised learning results also showed that IBM job postings naturally group into interpretable clusters based on role type, seniority, business area, and skill patterns.
 
-Despite these strengths, the project has several limitations. First, the dataset is relatively small, with fewer than 500 job postings after cleaning, which may limit model generalizability. Second, the dataset represents a snapshot in time and may not fully capture longer-term hiring trends. Third, missing values in key fields such as preferred technical experience are not random and may introduce bias into the model.
+### 8.1 Challenges and Future Work
 
-Future work could address these limitations by expanding the dataset through repeated web scraping over time, incorporating additional features such as geographic cost-of-living adjustments, and exploring more advanced modeling techniques such as regularized gradient boosting or neural networks. Additionally, improving text feature extraction beyond TF-IDF could further enhance model performance.
+Several challenges limited the analysis. First, the dataset was relatively small, with fewer than 500 cleaned job postings, which may reduce model generalizability. Second, some fields such as preferred education and technical experience contained missing or inconsistent information. Third, TF-IDF text features increased the dimensionality of the data, making modeling more computationally expensive and harder to interpret.
 
-Overall, this project demonstrates that job salary prediction is both feasible and informative, and highlights the importance of combining predictive modeling with interpretability and domain understanding when making real-world decisions.
+Model tuning was also limited by computation time, especially for Random Forest and Gradient Boosting. Because only a limited number of hyperparameter combinations could be tested, the final models may not represent the best possible tuned versions. In addition, salary depends on factors not fully captured in the dataset, such as exact location, negotiation, internal pay bands, applicant qualifications, cost of living, and remote-work status.
 
-## 7. Group member contributions
+Future work could improve the project in three ways. First, the dataset could be expanded by scraping postings over a longer time period and adding external variables such as regional cost of living and local salary benchmarks. Second, the modeling pipeline could use more advanced text representations, such as word embeddings or transformer-based sentence embeddings, instead of only TF-IDF. Third, the Shiny dashboard could be extended into a salary prediction tool where users input job characteristics and receive an estimated salary range.
+
+## 9. Group member contributions
 
 * **Zhonghao Liu** took charge of the random forest building and testing. After all three models were done by the team, Liu took over the entire model section by unifying the testing approach and recorded the data. Liu was also responsible for part 4 & 5 for this report.
 * **Daisy Zhou** was in charge of gradient boosting modeling which includes training, hyperparameter tuning, testing, and evaluation. She also made additions to the EDA analysis and wrote the introduction, data acquisition, and EDA sections for the report.
 * **Jisheng Zeng** led the final model comparison and model selection stage of the project. This involved consolidating evaluation results across all supervised learning models, conducting a comparative analysis based on both performance metrics and practical considerations such as interpretability and robustness, selecting the final model, and writing the Conclusion & Discussion section of the report.
+* **Baixuan Chen** was responsible for feature engineering, preprocessing, unsupervised learning analysis, and the interactive Shiny dashboard. This included constructing salary-related, education, location, seniority, role, and skill-based features; preparing the final processed dataset for analysis and modeling; and writing the Feature Engineering & Preprocessing and Unsupervised Learning sections of the report. Baixuan also developed and deployed the Shiny dashboard to interactively present the dataset overview and so on.
 
-## 8. Acknowledgements
+## 10. Acknowledgements
 
 The data in this report for supervised learning models is different from the earlier presentation. After the presentation, we unified the testing methods for all three methods for better comparison. Unfortunately, the alternative approach led to excessively long running time for random forest and gradient boosting, and therefore we cannot replicate our presentation test results. To resolve this, the TF-IDF features had been reduced from 1000 to 100, and only 20 randomly selected parameter combinations were chosen for these two methods, leading to slightly different results.
 
-## 9. Additional References besides Lectures
+## 11. Additional References besides Lectures
 
 * GeeksForGeeks. *How to Tune Hyperparameters in Gradient Boosting Algorithm*. https://www.geeksforgeeks.org/machine-learning/how-to-tune-hyperparameters-in-gradient-boosting-algorithm/
 * GeeksForGeeks. *Hyperparameters of Random Forest Classifier*. https://www.geeksforgeeks.org/machine-learning/hyperparameters-of-random-forest-classifier/
