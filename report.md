@@ -30,6 +30,7 @@ This report follows the standard data science workflow:
 - **Model Comparison and Selection**: Comparing models using RMSE, MAE, and R², while also considering interpretability, robustness, and practical prediction performance to select the final model.
 
 - **Dashboard Development**: Building an interactive Shiny dashboard to present dataset summaries, EDA results, feature engineering outputs, unsupervised learning findings, and supervised modeling results.
+
 ## 1. Data Acquisition & Preparation
 
 The dataset was acquired by scraping IBM’s public careers website and was filtered to job postings located in the United States. Because the careers site renders job listings dynamically through JavaScript rather than as a static HTML, a request-based scraper such as BeautifulSoup would not have been sufficient, so we used Selenium to extract its content. All of the code used for acquiring the data is found in ibm_scraping.ipynb. The raw scraped dataset `ibm_jobs_raw.csv` contains 478 rows and 11 columns, with each row representing a single job posting and columns covering structural metadata (i.e. job ID, job title, posting date, state/province), role attributes (area of work, position type), educational requirements (required and preferred), unstructured textual descriptions of preferred technical experience, and posted salary endpoints (min and max salary). Here, salary is the primary outcome of interest. 
