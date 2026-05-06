@@ -56,7 +56,7 @@ To prepare the raw dataset for downstream analysis, inconsistencies were first a
 
 Salary validity checks also revealed no logical inconsistencies. There were 0 cases where `min_salary_num` exceeded `max_salary_num`, and there were no non-positive salaries either. On the de-duplicated data, `min_salary_num` had a minimum of 29,120 and a mean of 105,427, while `max_salary_num` reached up to 410,000. `mid_salary` had a median of 134,000 and a mean of 141,138. 
 
-Furthermore, duplicate value detection revealed seven exact duplicate `job_id` values which were likely a byproduct of the web scraping process recapturing the same job posting. We removed these duplicate values on `job_id` to produce a final dataset of 471 unique postings.
+Furthermore, duplicate value detection revealed seven exact duplicate `job_id` values which were likely a byproduct of the web scraping process recapturing the same job posting. We removed these duplicate values on `job_id` to produce a final dataset of 471 unique postings used for EDA analysis. 
 
 To initially handle any missing values, any observations missing `min_salary`, `max_salary`, and `job_title` were dropped since a posting’s outcome variable cannot be defined without salary. We also discovered that missingness was concentrated in a small number of columns with `preferred_education` missing in 123 out of 478 rows (25.73%) and with `preferred_technical_experience` missing in 92 out of the 478 rows (19.25%).  Any NaN values in `preferred_technical_experience` were filled with an empty string, while any NaN values in `area_of_work` were replaced with the string “unknown”.  
 
@@ -130,7 +130,7 @@ Across position types, the difference in salary levels is noticeably greater (Fi
   <em>Figure 8: mid_salary Distribution by position_type</em>
 </p>
 
-Across required education, there is a clear ordinal pattern with High School Diploma/GED postings having a median around $112,000, Bachelor’s around $158,000, and Master’s around $196,500 (Figure 9). The Doctorate group has the highest median but with very few postings, and the Kruksal-Wallis test is again significant. Because education is naturally ordered, this finding motivates the need for encoding required education and preferred education as ordinal levels in feature engineering rather than one-hot dummy variables. 
+Across required education, there is a clear ordinal pattern with High School Diploma/GED postings having a median around $112,000, Bachelor’s around $158,000, and Master’s around $196,500 (Figure 9). The Doctorate group has the highest median but with very few postings, and the Kruskal-Wallis test is again significant. Because education is naturally ordered, this finding motivates the need for encoding required education and preferred education as ordinal levels in feature engineering rather than one-hot dummy variables. 
 
 <p align="center">
   <img src="./Figures/midsalary_by_required_ed.png" alt="mid salary boxplot by required education" width="800"><br>
@@ -284,7 +284,7 @@ Although salary variables cannot be used directly as predictors in the supervise
   </tbody>
 </table>
 
-The `salary_range` feature helped us understand how compensation flexibility differs across roles. However, because these variables are directly derived from the target salary information, they were removed before supervised model training.
+The `salary_range` feature helped us understand how compensation flexibility differs across roles. However, these salary derived variables were used strictly for exploratory analsis and interpretation and were exxcluded from all supervised and unsupervised model inputs to prevent target leakage. 
 
 ### 3.3 Date Features
 
@@ -672,7 +672,7 @@ Figure 20 shows that experience, education level, and seniority-related features
 
 Because the processed feature matrix was high-dimensional, we used PCA to reduce dimensionality. The first two principal components explained 10.34% and 7.59% of the variance, respectively. Together, they explained 17.93% of total variation, which suggests that job posting structure is spread across many dimensions.
 
-The cumulative explained variance showed that 26 principal components were needed to explain 80% of the variance, and 38 components were needed to explain 90%. Therefore, we used the first 38 principal components for K-Means clustering and Isolation Forest.
+The cumulative explained variance showed that 26 principal components were needed to explain 80% of the variance, and 38 components were needed to explain 90%. This gradual accumulation confirms that the data is highly distributed across many sparse engineered and TF-IDF dimensions. Therefore, we used the first 38 principal components for K-Means clustering and Isolation Forest.
 
 **Table 4: PCA explained variance summary**
 
@@ -701,7 +701,7 @@ Figure 21 shows that the cumulative explained variance increases gradually as mo
 
 ### 4.3 K-Means Clustering
 
-K-Means clustering was applied to the first 38 principal components. We tested `k` from 2 to 8 and selected `k = 8`, which had the highest silhouette score among the tested values.
+K-Means clustering was applied to the first 38 principal components. We tested `k` from 2 to 8 and selected `k = 8`, which had the highest silhouette score among the tested values even though the overall sccores remained modest. This suggests overlapping cluster structure rather than sharply separated groups. 
 
 **Table 5: K-Means silhouette scores**
 
@@ -876,13 +876,13 @@ Overall, these results support the later supervised modeling stage by showing th
 
 ## 5. Model Development
 
-With our categorical, numerical, and TF-IDF features constructed in the Feature Engineering section, we developed supervised models to predict the log midpoint salary. The predictor matrix `X` and target variable `y` were defined before modeling, and we used a 75/25 train-test split to evaluate three models: Random Forest, Gradient Boosting, and Ridge Regression.
+With our categorical, numerical, and TF-IDF features constructed in the Feature Engineering section, we developed supervised models to predict the log midpoint salary. The predictor matrix `X` and target variable `y` were defined before modeling, and we used a 75/25 train-test split to evaluate three models: Random Forest, Gradient Boosting, and Ridge Regression. We also set random_state equal to 42 to ensure reproducibility across all of these supervised models. 
 
 ### 5.1 Three Models We Chose
 
 - We chose **Random Forest** because it improves on standard bagging by selecting only a subset of features at each split. This increases tree diversity and helps reduce overfitting, which is useful for our dataset with many engineered and TF-IDF features.
 - We chose **Gradient Boosting** because it builds trees sequentially, with each new tree correcting the residual errors of the previous model. This allows it to capture patterns that a simple averaging method may miss.
-- We chose **Ridge Regression** as a linear baseline. Ridge regression is easier to interpret than tree-based models and helps us compare whether nonlinear methods provide meaningful gains over a regularized linear model.
+- We chose **Ridge Regression** as a linear baseline. Ridge regression provides coefficient-based interpretability compared to ensemble tree methods and helps us compare whether nonlinear methods provide meaningful gains over a regularized linear model.
 
 ### 5.2 Parameters for Hyperparameter Tuning
 
@@ -1157,7 +1157,7 @@ Visually, all three reflected similar performances across the testing dataset, w
 |---|---|
 | ![](./Figures/model_images/random_forest_top20.png) | ![](./Figures/model_images/gradient_boosting_top20.png) |
 
-While both models' result proved our hypothesis that critical factors including job level and education level would affect the salary, random forest shows a much better distribution across these features. The feature importances are calculated using Mean Decrease Impurity (MDI): the higher the value, the purer the descendent data after this decision node. Random forest's random feature selection feature provides a more balanced distribution across features, making the top feature "Professional" having only 0.2939 MDI. On the other hand, continuous learning for gradient boosting led to high importance of "Professional" with 0.4867 MDI. As a result, random forest makes features much balanced especially when we have hundreds of features.
+While both models' result proved our hypothesis that critical factors including job level and education level would affect the salary, random forest shows a much better distribution across these features. The feature importances are calculated using Mean Decrease Impurity (MDI): the higher the value, the purer the descendent data after this decision node. Random forest distributes importance across many decorrelated trees which can reduce dominance by a single feature compared to sequential boosting methods.  We see that with the results of Random Forest that the top feature is "Professional" with only 0.2939 MDI. On the other hand, continuous learning for gradient boosting led to high importance of "Professional" with 0.4867 MDI. As a result, random forest makes features much balanced especially when we have hundreds of features.
 
 ## 7. Interactive Shiny Dashboard
 
