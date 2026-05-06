@@ -4,6 +4,8 @@
 
 **Shiny Dashboard:** https://baixuanchen5243.shinyapps.io/5243-project4/
 
+**Presentation Slides:** https://docs.google.com/presentation/d/1bLvZwq1sXe3fxW3mo5twZtFoaG9eRVhyxtE2s8hx3ns/edit?usp=sharing
+
 This repository contains the full pipeline, data, report, and deployment components for the final STAT5243 project.
 
 ## Project Overview
